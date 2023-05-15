@@ -13,7 +13,7 @@ class MainWindow(qtw.QWidget):
 
         # self.showFullScreen()
 
-        self.title = qtw.QLabel('Presupuesto')
+        self.title = qtw.QLabel('Presupuesto', objectName='titulo')
         self.presupuestos_pendientes = qtw.QComboBox()
         self.clientes_combo = qtw.QComboBox()
         self.trabajos_todos = qtw.QComboBox()
@@ -202,11 +202,18 @@ class MainWindow(qtw.QWidget):
 
 
 stylesheet = '''
+#titulo {
+color: darkblue;
+font: bold;
+font-size: 18pt;
+font-family: Trebuchet MS;
+}
 QWidget {
     background-color: darkcyan;
     }
 QLabel {
 font-size: 11pt;
+color: bisque;
 }
 #preciounitario {
 border: 3px solid gray;
