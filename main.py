@@ -81,10 +81,12 @@ class MainWindow(qtw.QWidget):
         self.total8 = qtw.QLineEdit()
 
         # Totales
-        self.label_p_unitario2 = qtw.QLabel('P. Unitario')
-        self.label_total2 = qtw.QLabel('Total')
-        self.punit = qtw.QLabel('0.00')
-        self.total = qtw.QLabel('0.00')
+        self.label_p_unitario2 = qtw.QLabel('P. Unitario',
+                                            objectName='preciounitariolabel')
+        self.label_total2 = qtw.QLabel('Total',
+                                       objectName='preciototallabel')
+        self.punit = qtw.QLabel('0.00', objectName='preciounitario')
+        self.total = qtw.QLabel('0.00', objectName='preciototal')
 
         # Otros
         self.otro1 = qtw.QLineEdit()
@@ -96,9 +98,12 @@ class MainWindow(qtw.QWidget):
         self.p_otro3 = qtw.QLineEdit()
 
         # Botones
-        self.btn_borrar = qtw.QPushButton('Borrar')
-        self.btn_pdf = qtw.QPushButton('PDF')
-        self.btn_eliminar_todo = qtw.QPushButton('Descartar presupuesto')
+        self.btn_borrar = qtw.QPushButton('Borrar',
+                                          objectName='botonborrar')
+        self.btn_pdf = qtw.QPushButton('PDF',
+                                       objectName='botonpdf')
+        self.btn_eliminar_todo = qtw.QPushButton('Descartar presupuesto',
+                                                 objectName='borrartodo')
 
         # Layout
         main_layout = qtw.QVBoxLayout()
@@ -125,70 +130,119 @@ class MainWindow(qtw.QWidget):
         grid2.addWidget(qtw.QLabel('Cant.'), 1, 4)
         grid2.addWidget(self.cantidad, 2, 4, 1, 1)
 
-        # Carga de producto
+        # Fechas
         grid2.addItem(qtw.QSpacerItem(10, 20), 3, 1)
+        grid2.addWidget(qtw.QLabel('Fecha Recepción'), 4, 1)
+        grid2.addWidget(self.fecha_rec, 4, 2)
+        grid2.addWidget(qtw.QLabel('Fecha Entrega'), 5, 1)
+        grid2.addWidget(self.fecha_entrega, 5, 2)
+        grid2.addWidget(qtw.QLabel('Fecha Realización'), 4, 3)
+        grid2.addWidget(self.fecha_realizacion, 5, 3)
+
+        # Carga de producto
+        grid2.addItem(qtw.QSpacerItem(10, 20), 6, 1)
         # box1.setLayout(grid1)
-        grid2.addWidget(self.label_nombre, 4, 1)
-        grid2.addWidget(self.combo1, 5, 1, 1, 4)
-        grid2.addWidget(self.combo2, 6, 1, 1, 4)
-        grid2.addWidget(self.combo3, 7, 1, 1, 4)
-        grid2.addWidget(self.combo4, 8, 1, 1, 4)
-        grid2.addWidget(self.combo5, 9, 1, 1, 4)
-        grid2.addWidget(self.combo6, 10, 1, 1, 4)
-        grid2.addWidget(self.combo7, 11, 1, 1, 4)
-        grid2.addWidget(self.combo8, 12, 1, 1, 4)
+        grid2.addWidget(self.label_nombre, 7, 1)
+        grid2.addWidget(self.combo1, 8, 1, 1, 4)
+        grid2.addWidget(self.combo2, 9, 1, 1, 4)
+        grid2.addWidget(self.combo3, 10, 1, 1, 4)
+        grid2.addWidget(self.combo4, 11, 1, 1, 4)
+        grid2.addWidget(self.combo5, 12, 1, 1, 4)
+        grid2.addWidget(self.combo6, 13, 1, 1, 4)
+        grid2.addWidget(self.combo7, 14, 1, 1, 4)
+        grid2.addWidget(self.combo8, 15, 1, 1, 4)
         # Stock
-        grid2.addWidget(self.label_stock, 4, 5)
-        grid2.addWidget(self.stock1, 5, 5)
-        grid2.addWidget(self.stock2, 6, 5)
-        grid2.addWidget(self.stock3, 7, 5)
-        grid2.addWidget(self.stock4, 8, 5)
-        grid2.addWidget(self.stock5, 9, 5)
-        grid2.addWidget(self.stock6, 10, 5)
-        grid2.addWidget(self.stock7, 11, 5)
-        grid2.addWidget(self.stock8, 12, 5)
+        grid2.addWidget(self.label_stock, 7, 5)
+        grid2.addWidget(self.stock1, 8, 5)
+        grid2.addWidget(self.stock2, 9, 5)
+        grid2.addWidget(self.stock3, 10, 5)
+        grid2.addWidget(self.stock4, 11, 5)
+        grid2.addWidget(self.stock5, 12, 5)
+        grid2.addWidget(self.stock6, 13, 5)
+        grid2.addWidget(self.stock7, 14, 5)
+        grid2.addWidget(self.stock8, 15, 5)
         # P. Unitario
-        grid2.addWidget(self.label_p_unitario, 4, 6)
-        grid2.addWidget(self.punitario1, 5, 6)
-        grid2.addWidget(self.punitario2, 6, 6)
-        grid2.addWidget(self.punitario3, 7, 6)
-        grid2.addWidget(self.punitario4, 8, 6)
-        grid2.addWidget(self.punitario5, 9, 6)
-        grid2.addWidget(self.punitario6, 10, 6)
-        grid2.addWidget(self.punitario7, 11, 6)
-        grid2.addWidget(self.punitario8, 12, 6)
+        grid2.addWidget(self.label_p_unitario, 7, 6)
+        grid2.addWidget(self.punitario1, 8, 6)
+        grid2.addWidget(self.punitario2, 9, 6)
+        grid2.addWidget(self.punitario3, 10, 6)
+        grid2.addWidget(self.punitario4, 11, 6)
+        grid2.addWidget(self.punitario5, 12, 6)
+        grid2.addWidget(self.punitario6, 13, 6)
+        grid2.addWidget(self.punitario7, 14, 6)
+        grid2.addWidget(self.punitario8, 15, 6)
         # Total
-        grid2.addWidget(self.label_total, 4, 7)
-        grid2.addWidget(self.total1, 5, 7)
-        grid2.addWidget(self.total2, 6, 7)
-        grid2.addWidget(self.total3, 7, 7)
-        grid2.addWidget(self.total4, 8, 7)
-        grid2.addWidget(self.total5, 9, 7)
-        grid2.addWidget(self.total6, 10, 7)
-        grid2.addWidget(self.total7, 11, 7)
-        grid2.addWidget(self.total8, 12, 7)
+        grid2.addWidget(self.label_total, 7, 7)
+        grid2.addWidget(self.total1, 8, 7)
+        grid2.addWidget(self.total2, 9, 7)
+        grid2.addWidget(self.total3, 10, 7)
+        grid2.addWidget(self.total4, 11, 7)
+        grid2.addWidget(self.total5, 12, 7)
+        grid2.addWidget(self.total6, 13, 7)
+        grid2.addWidget(self.total7, 14, 7)
+        grid2.addWidget(self.total8, 15, 7)
         # Otros
-        grid2.addItem(qtw.QSpacerItem(10, 20), 13, 1)
-        grid2.addWidget(self.otro1, 14, 1, 1, 5)
-        grid2.addWidget(self.otro2, 15, 1, 1, 5)
-        grid2.addWidget(self.otro3, 16, 1, 1, 5)
-        grid2.addWidget(self.p_otro1, 14, 7)
-        grid2.addWidget(self.p_otro2, 15, 7)
-        grid2.addWidget(self.p_otro3, 16, 7)
+        grid2.addItem(qtw.QSpacerItem(10, 20), 16, 1)
+        grid2.addWidget(self.otro1, 17, 1, 1, 5)
+        grid2.addWidget(self.otro2, 18, 1, 1, 5)
+        grid2.addWidget(self.otro3, 19, 1, 1, 5)
+        grid2.addWidget(self.p_otro1, 17, 7)
+        grid2.addWidget(self.p_otro2, 18, 7)
+        grid2.addWidget(self.p_otro3, 19, 7)
+
+        grid2.addWidget(self.label_p_unitario2, 7, 8, 1, 2)
+        grid2.addWidget(self.punit, 9, 8, 2, 2)
+        grid2.addWidget(self.label_total2, 7, 10, 1, 2)
+        grid2.addWidget(self.total, 9, 10, 2, 2)
+        grid2.addWidget(self.btn_borrar, 11, 9, 2, 2)
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
         main_layout.addLayout(grid2)
-
-
-
-
 
         self.show()
 
 
+stylesheet = '''
+QWidget {
+    background-color: darkcyan;
+    }
+QLabel {
+font-size: 11pt;
+}
+#preciounitario {
+border: 3px solid gray;
+background-color: gray;
+border-style:outset;
+border-width:3px;
+border-color:yellow;
+font-size: 17pt;
+}
+#preciototal {
+border: 3px solid gray;
+background-color: gray;
+border-style:outset;
+border-width:3px;
+border-color:yellow;
+font-size: 17pt;
+}
+QLineEdit {
+    border: 1px solid black;
+    background-color: lightgray;
+}
+QComboBox {
+background-color: cadetblue;
+}
+QPushButton {
+border-style: outset;
+border-width: 3px;
+border-color: cadetblue;
+font-size: 11pt;
+padding: 6px;
+}
+'''
 if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
+    app.setStyleSheet(stylesheet)
     # it's required to save a reference to MainWindow.
     # if it goes out of scope, it will be destroyed.
     mw = MainWindow()
-    # mw.settings.setValue('fullscreen', mw.isFullScreen())
     sys.exit(app.exec())
