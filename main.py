@@ -1,9 +1,13 @@
 import sys
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
+import pandas as pd
 
 
 class MainWindow(qtw.QWidget):
+
+    presupuesto = pd.read_csv('database/DB/presupuesto.csv', sep=',')
+    productos = pd.read_csv('database/DB/productos.csv', sep=',')
 
     def __init__(self):
 
@@ -139,6 +143,24 @@ class MainWindow(qtw.QWidget):
         grid2.addWidget(qtw.QLabel('Fecha Realización'), 4, 3)
         grid2.addWidget(self.fecha_realizacion, 5, 3)
 
+        # Medidas
+        grid2.addWidget(qtw.QLabel('Med. Orig. cm.'), 1, 6, 2, 1)
+        grid2.addWidget(self.med_orig_cm_alto, 1, 7)
+        grid2.addWidget(self.med_orig_cm_ancho, 2, 7)
+
+        grid2.addWidget(qtw.QLabel('pp. cm'), 1, 8)
+        grid2.addWidget(self.pp_cm, 1, 9)
+        grid2.addWidget(qtw.QLabel('var.'), 2, 8)
+        grid2.addWidget(self.var, 2, 9)
+
+        grid2.addWidget(qtw.QLabel('Med. Final cm.'), 4, 6, 2, 1)
+        grid2.addWidget(self.med_final_cm_alto, 4, 7)
+        grid2.addWidget(self.med_final_cm_ancho, 5, 7)
+
+        grid2.addWidget(qtw.QLabel('Sup. m2:'), 4, 8)
+        grid2.addWidget(self.sup_m2, 4, 9)
+        grid2.addWidget(qtw.QLabel('Per. ml:'), 5, 8)
+        grid2.addWidget(self.per_ml, 5, 9)
         # Carga de producto
         grid2.addItem(qtw.QSpacerItem(10, 20), 6, 1)
         # box1.setLayout(grid1)
@@ -198,18 +220,58 @@ class MainWindow(qtw.QWidget):
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
         main_layout.addLayout(grid2)
 
+        #### Combo-boxes ####
+        ### Clientes
+
+        self.completer_trabajos = qtw.QCompleter(
+            self.presupuesto.loc[:, 'Motivo'], self
+        )
+        self.completer_trabajos.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.completer_trabajos.setFilterMode(qtc.Qt.MatchContains)
+        self.completer_clientes = qtw.QCompleter(
+            self.presupuesto.loc[:, 'Cliente'], self
+        )
+        self.completer_clientes.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.completer_clientes.setFilterMode(qtc.Qt.MatchContains)
+
+        self.clientes_combo.addItem('')
+        self.clientes_combo.addItems(
+            sorted(self.presupuesto.loc[:, 'Cliente'].unique()))
+        self.trabajos_todos.addItem('')
+        self.trabajos_todos.addItems(
+            sorted(self.presupuesto.loc[:, 'Motivo'].unique())
+        )
+        self.trabajos_todos.setEditable(True)
+        self.clientes_combo.setEditable(True)
+        self.trabajos_todos.setCompleter(self.completer_trabajos)
+        self.clientes_combo.setCompleter(self.completer_clientes)
+
+        self.completer_productos = qtw.QCompleter(
+            self.productos.loc[:, 'DenominaciónCompleta'], self)
+        self.completer_productos.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.completer_productos.setFilterMode(qtc.Qt.MatchContains)
+        # Productos
+        for i in range(grid2.count()):
+            item = grid2.itemAt(i).widget()
+            if isinstance(item, qtw.QComboBox):
+                item.setEditable(True)
+                item.setCompleter(self.completer_productos)
+
+
         self.show()
+
+    # Methods
 
 
 stylesheet = '''
 #titulo {
-color: darkblue;
+color: bisque;
 font: bold;
-font-size: 18pt;
+font-size: 22pt;
 font-family: Trebuchet MS;
 }
 QWidget {
-    background-color: darkcyan;
+    background-color: darkslategray;
     }
 QLabel {
 font-size: 11pt;
