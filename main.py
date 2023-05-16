@@ -389,42 +389,31 @@ class MainWindow(qtw.QWidget):
     # Cálculos
     @qtc.pyqtSlot()
     def mega(self):
-        print(len(self.med_orig_cm_ancho.text()), len(self.med_orig_cm_alto.text()),
-              len(self.pp_cm.text()), len(self.var.text()))
         if len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) > 0:
-            print('Ey 1!')
             cm_ancho = float(self.med_orig_cm_ancho.text())
             cm_alto = float(self.med_orig_cm_alto.text())
         elif len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) < 1:
-            print('Ey 2!')
             cm_ancho = float(self.med_orig_cm_ancho.text())
             cm_alto = 0
         elif len(self.med_orig_cm_ancho.text()) < 1 and len(self.med_orig_cm_alto.text()) > 0:
-            print('Ey 3!')
             cm_ancho = 0
             cm_alto = float(self.med_orig_cm_alto.text())
         else:
-            print('Ey 4!')
             cm_ancho = 0
             cm_alto = 0
         # check pp y var
         if len(self.pp_cm.text()) > 0 and len(self.var.text()) > 0:
-            print('Ey!')
             pp = float(self.pp_cm.text()) * 2
             var = float(self.var.text()) * 2
         elif len(self.pp_cm.text()) > 0 and len(self.var.text()) < 1:
-            print('Ey!')
             pp = float(self.pp_cm.text()) * 2
             var = 0
         elif len(self.pp_cm.text()) < 1 and len(self.var.text()) > 0:
-            print('Ey!')
             pp = 0
             var = float(self.var.text()) * 2
         else:
-            print('Ey!')
             pp = 0
             var = 0
-        print('Ey!')
         final_ancho = cm_ancho + pp + var
         final_alto = cm_alto + pp + var
         self.med_final_cm_ancho.setText(str(final_ancho))
