@@ -421,10 +421,13 @@ class MainWindow(qtw.QWidget):
         # Perímetro (mm)
         # instructions or desired functionality unclear
         if len(self.var.text()) > 0:
-            per = (float(self.med_final_cm_ancho.text()) * 2 +
-                   float(self.med_final_cm_alto.text()) * 2) / 10
+            per = (float(self.med_final_cm_ancho.text()) +
+                   float(self.med_final_cm_alto.text()) * 2) / 1000
             self.per_ml.setText(str(per))
+        else:
+            self.var.clear()
 
+    
 stylesheet = '''
 
 #titulo {
