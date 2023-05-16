@@ -389,32 +389,51 @@ class MainWindow(qtw.QWidget):
     @qtc.pyqtSlot()
     def sumar_ancho(self):
         if len(self.med_orig_cm_ancho.text()) > 0:
-            total_ancho = float(self.med_orig_cm_ancho.text())
-            self.med_final_cm_ancho.setText(str(total_ancho))
+            if len(self.pp_cm.text()) > 0:
+                total_ancho = float(self.med_orig_cm_ancho.text()) + (float(self.pp_cm.text()) * 2)
+                self.med_final_cm_ancho.setText(str(total_ancho))
+            else:
+                total_ancho = float(self.med_orig_cm_ancho.text())
+                self.med_final_cm_ancho.setText(str(total_ancho))
         else:
-            self.med_final_cm_ancho.setText('0')
+            if len(self.pp_cm.text()) > 0:
+                self.sumar_medida_pp()
+            else:
+                self.med_final_cm_ancho.setText('0')
 
     @qtc.pyqtSlot()
     def sumar_alto(self):
         if len(self.med_orig_cm_alto.text()) > 0:
-            total_alto = float(self.med_orig_cm_alto.text())
-            self.med_final_cm_alto.setText(str(total_alto))
+            if len(self.pp_cm.text()) > 0:
+                total_alto = float(self.med_orig_cm_alto.text()) + (float(self.pp_cm.text()) * 2)
+                self.med_final_cm_alto.setText(str(total_alto))
+            else:
+                total_alto = float(self.med_orig_cm_alto.text())
+                self.med_final_cm_alto.setText(str(total_alto))
         else:
-            self.med_final_cm_alto.setText('0')
+            if len(self.pp_cm.text()) > 0:
+                self.sumar_medida_pp()
+            else:
+                self.med_final_cm_alto.setText('0')
+
 
     @qtc.pyqtSlot()
     def sumar_medida_pp(self):
+        # check si los valores finales están vacíos (no deberían)
         if len(self.med_final_cm_alto.text()) == 0 or len(self.med_final_cm_ancho.text()) == 0:
             self.med_final_cm_ancho.setText('0')
             self.med_final_cm_alto.setText('0')
+        # check si el lineedit de pp no está vacío (text changed no diferencia cómo cambia el texto)
         if len(self.pp_cm.text()) > 0:
+            # cálculo para paspartú
             extra = float(self.pp_cm.text()) * 2
-            if len(self.med_orig_cm_ancho.text()) == 0 :
+            if len(self.med_orig_cm_ancho.text()) == 0:  # si los valores originales están vacíos = 0
                 self.med_orig_cm_ancho.setText('0')
             if len(self.med_orig_cm_alto.text()) == 0:
                 self.med_orig_cm_alto.setText('0')
             self.med_final_cm_ancho.setText(str(extra + float(self.med_orig_cm_ancho.text())))
             self.med_final_cm_alto.setText(str(extra + float(self.med_orig_cm_alto.text())))
+        # si el campo para pp se vacía o está vacío recalcular valores finales
         else:
             self.sumar_alto()
             self.sumar_ancho()
