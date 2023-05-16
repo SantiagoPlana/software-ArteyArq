@@ -111,21 +111,20 @@ class MainWindow(qtw.QWidget):
 
         # Layout
         main_layout = qtw.QVBoxLayout()
-        grid1 = qtw.QGridLayout()
+        self.grid1 = qtw.QGridLayout(objectName='grid1')
         self.grid2 = qtw.QGridLayout()
         box1 = qtw.QGroupBox(' ')
         self.setLayout(main_layout)
-        main_layout.addLayout(grid1)
-        grid1.addWidget(self.title, 0, 0, 1, 4)
-        grid1.addWidget(qtw.QLabel('Presupuestos pendientes'),
-                              1, 1)
-        grid1.addWidget(self.presupuestos_pendientes, 1, 2)
-        grid1.addWidget(qtw.QLabel('Clientes'), 2, 1)
-        grid1.addWidget(self.clientes_combo, 2, 2)
-        grid1.addWidget(qtw.QLabel('Trabajos (todos)'), 1, 3)
-        grid1.addWidget(self.trabajos_todos, 1, 4)
-        grid1.addWidget(qtw.QLabel('Trabajos (por año)'), 2, 3)
-        grid1.addWidget(self.trabajos_año, 2, 4)
+        main_layout.addLayout(self.grid1)
+        self.grid1.addWidget(self.title, 0, 0, 1, 2)
+        self.grid1.addWidget(qtw.QLabel('Presupuestos pendientes'), 1, 1)
+        self.grid1.addWidget(self.presupuestos_pendientes, 1, 2)
+        self.grid1.addWidget(qtw.QLabel('Clientes'), 2, 1)
+        self.grid1.addWidget(self.clientes_combo, 2, 2)
+        self.grid1.addWidget(qtw.QLabel('Trabajos (todos)'), 1, 3)
+        self.grid1.addWidget(self.trabajos_todos, 1, 4)
+        self.grid1.addWidget(qtw.QLabel('Trabajos (por año)'), 2, 3)
+        self.grid1.addWidget(self.trabajos_año, 2, 4)
         # main_layout.addLayout(qtw.QSpacerItem(1, 1), 4, 1, 1, 6)
         self.grid2.addWidget(qtw.QLabel('Cliente'), 1, 1)
         self.grid2.addWidget(self.cliente, 1, 2, 1, 2)
@@ -248,6 +247,7 @@ class MainWindow(qtw.QWidget):
 
 
         # Productos
+        # Instanciamos completers
         # Lamentablemente hay que setear un completer por combobox o si no se borran los valores de uno
         # cuando se modifica otro...
         self.completer_productos = qtw.QCompleter(
@@ -283,23 +283,8 @@ class MainWindow(qtw.QWidget):
         self.completer_productos8.setCaseSensitivity(qtc.Qt.CaseInsensitive)
         self.completer_productos8.setFilterMode(qtc.Qt.MatchContains)
 
-        self.combo1.activated.connect(lambda: self.complete(string=self.combo1.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo1)))
-        self.combo2.activated.connect(lambda: self.complete(string=self.combo2.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo2)))
-        self.combo3.activated.connect(lambda: self.complete(string=self.combo3.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo3)))
-        self.combo4.activated.connect(lambda: self.complete(string=self.combo4.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo4)))
-        self.combo5.activated.connect(lambda: self.complete(string=self.combo5.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo5)))
-        self.combo6.activated.connect(lambda: self.complete(string=self.combo6.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo6)))
-        self.combo7.activated.connect(lambda: self.complete(string=self.combo7.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo7)))
-        self.combo8.activated.connect(lambda: self.complete(string=self.combo8.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo8)))
 
+        # Setting editability and completer for each product combo-box
         self.combo1.setEditable(True)
         self.combo2.setEditable(True)
         self.combo3.setEditable(True)
@@ -317,19 +302,30 @@ class MainWindow(qtw.QWidget):
         self.combo7.setCompleter(self.completer_productos7)
         self.combo8.setCompleter(self.completer_productos8)
 
+        # Signals
+        self.combo1.activated.connect(lambda: self.complete(string=self.combo1.currentText(),
+                                                            idx=self.grid2.indexOf(self.combo1)))
+        self.combo2.activated.connect(lambda: self.complete(string=self.combo2.currentText(),
+                                                            idx=self.grid2.indexOf(self.combo2)))
+        self.combo3.activated.connect(lambda: self.complete(string=self.combo3.currentText(),
+                                                            idx=self.grid2.indexOf(self.combo3)))
+        self.combo4.activated.connect(lambda: self.complete(string=self.combo4.currentText(),
+                                                            idx=self.grid2.indexOf(self.combo4)))
+        self.combo5.activated.connect(lambda: self.complete(string=self.combo5.currentText(),
+                                                            idx=self.grid2.indexOf(self.combo5)))
+        self.combo6.activated.connect(lambda: self.complete(string=self.combo6.currentText(),
+                                                            idx=self.grid2.indexOf(self.combo6)))
+        self.combo7.activated.connect(lambda: self.complete(string=self.combo7.currentText(),
+                                                            idx=self.grid2.indexOf(self.combo7)))
+        self.combo8.activated.connect(lambda: self.complete(string=self.combo8.currentText(),
+                                                            idx=self.grid2.indexOf(self.combo8)))
 
-        #for i in range(self.grid2.count()):
-            # Widget
-        #    item = self.grid2.itemAt(i).widget()
-        #    if isinstance(item, qtw.QComboBox):
-        #        item.setEditable(True)
-        #        item.setCompleter(self.completer_productos)
+        self.btn_borrar.clicked.connect(self.borrar)
 
         self.show()
 
     # Methods
 
-    # @qtc.pyqtSlot(str, )
     def complete(self, string, idx):
         #print('Hey!')
         subset = self.productos[
@@ -345,27 +341,42 @@ class MainWindow(qtw.QWidget):
         except Exception as e:
             print(e)
 
+    @qtc.pyqtSlot()
+    def borrar(self):
+        for i in range(self.grid1.count()):
+            item = self.grid1.itemAt(i).widget()
+            if isinstance(item, qtw.QComboBox):
+                item.clearEditText()
+        for i in range(self.grid2.count()):
+            item = self.grid2.itemAt(i).widget()
+            if isinstance(item, qtw.QComboBox):
+                item.clearEditText()
+            elif isinstance(item, qtw.QLineEdit):
+                item.clear()
+
 
 stylesheet = '''
+
 #titulo {
-color: bisque;
+color: #000115;
 font: bold;
 font-size: 22pt;
 font-family: Trebuchet MS;
 }
 QWidget {
-    background-color: darkslategray;
+    background-color: antiquewhite;
     }
+
 QLabel {
 font-size: 11pt;
-color: bisque;
+color: #000115;
 }
 #preciounitario {
 border: 3px solid gray;
 background-color: gray;
 border-style:outset;
 border-width:3px;
-border-color:yellow;
+border-color:bisque;
 font-size: 17pt;
 }
 #preciototal {
@@ -373,7 +384,7 @@ border: 3px solid gray;
 background-color: gray;
 border-style:outset;
 border-width:3px;
-border-color:yellow;
+border-color:cornsilk;
 font-size: 17pt;
 }
 QLineEdit {
@@ -381,12 +392,12 @@ QLineEdit {
     background-color: lightgray;
 }
 QComboBox {
-background-color: cadetblue;
+background-color: ivory;
 }
 QPushButton {
 border-style: outset;
 border-width: 3px;
-border-color: cadetblue;
+border-color: #000115;
 font-size: 11pt;
 padding: 6px;
 }
