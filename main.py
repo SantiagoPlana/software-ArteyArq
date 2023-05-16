@@ -332,9 +332,10 @@ class MainWindow(qtw.QWidget):
         #self.med_orig_cm_alto.textEdited.connect(
         #    lambda: self.med_final_cm_alto.setText(
         #        str(float(self.med_orig_cm_alto.text()) + float(self.med_final_cm_alto.text()))))
-        self.med_orig_cm_ancho.textChanged.connect(self.sumar_ancho)
-        self.med_orig_cm_alto.textChanged.connect(self.sumar_alto)
-        self.pp_cm.textChanged.connect(self.sumar_medida_pp)
+        self.med_orig_cm_ancho.textChanged.connect(self.mega)
+        self.med_orig_cm_alto.textChanged.connect(self.mega)
+        self.pp_cm.textChanged.connect(self.mega)
+        self.var.textChanged.connect(self.mega)
         self.show()
 
     # Methods
@@ -387,56 +388,47 @@ class MainWindow(qtw.QWidget):
 
     # Cálculos
     @qtc.pyqtSlot()
-    def sumar_ancho(self):
-        if len(self.med_orig_cm_ancho.text()) > 0:
-            if len(self.pp_cm.text()) > 0:
-                total_ancho = float(self.med_orig_cm_ancho.text()) + (float(self.pp_cm.text()) * 2)
-                self.med_final_cm_ancho.setText(str(total_ancho))
-            else:
-                total_ancho = float(self.med_orig_cm_ancho.text())
-                self.med_final_cm_ancho.setText(str(total_ancho))
+    def mega(self):
+        print(len(self.med_orig_cm_ancho.text()), len(self.med_orig_cm_alto.text()),
+              len(self.pp_cm.text()), len(self.var.text()))
+        if len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) > 0:
+            print('Ey 1!')
+            cm_ancho = float(self.med_orig_cm_ancho.text())
+            cm_alto = float(self.med_orig_cm_alto.text())
+        elif len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) < 1:
+            print('Ey 2!')
+            cm_ancho = float(self.med_orig_cm_ancho.text())
+            cm_alto = 0
+        elif len(self.med_orig_cm_ancho.text()) < 1 and len(self.med_orig_cm_alto.text()) > 0:
+            print('Ey 3!')
+            cm_ancho = 0
+            cm_alto = float(self.med_orig_cm_alto.text())
         else:
-            if len(self.pp_cm.text()) > 0:
-                self.sumar_medida_pp()
-            else:
-                self.med_final_cm_ancho.setText('0')
-
-    @qtc.pyqtSlot()
-    def sumar_alto(self):
-        if len(self.med_orig_cm_alto.text()) > 0:
-            if len(self.pp_cm.text()) > 0:
-                total_alto = float(self.med_orig_cm_alto.text()) + (float(self.pp_cm.text()) * 2)
-                self.med_final_cm_alto.setText(str(total_alto))
-            else:
-                total_alto = float(self.med_orig_cm_alto.text())
-                self.med_final_cm_alto.setText(str(total_alto))
+            print('Ey 4!')
+            cm_ancho = 0
+            cm_alto = 0
+        # check pp y var
+        if len(self.pp_cm.text()) > 0 and len(self.var.text()) > 0:
+            print('Ey!')
+            pp = float(self.pp_cm.text()) * 2
+            var = float(self.var.text()) * 2
+        elif len(self.pp_cm.text()) > 0 and len(self.var.text()) < 1:
+            print('Ey!')
+            pp = float(self.pp_cm.text()) * 2
+            var = 0
+        elif len(self.pp_cm.text()) < 1 and len(self.var.text()) > 0:
+            print('Ey!')
+            pp = 0
+            var = float(self.var.text()) * 2
         else:
-            if len(self.pp_cm.text()) > 0:
-                self.sumar_medida_pp()
-            else:
-                self.med_final_cm_alto.setText('0')
-
-
-    @qtc.pyqtSlot()
-    def sumar_medida_pp(self):
-        # check si los valores finales están vacíos (no deberían)
-        if len(self.med_final_cm_alto.text()) == 0 or len(self.med_final_cm_ancho.text()) == 0:
-            self.med_final_cm_ancho.setText('0')
-            self.med_final_cm_alto.setText('0')
-        # check si el lineedit de pp no está vacío (text changed no diferencia cómo cambia el texto)
-        if len(self.pp_cm.text()) > 0:
-            # cálculo para paspartú
-            extra = float(self.pp_cm.text()) * 2
-            if len(self.med_orig_cm_ancho.text()) == 0:  # si los valores originales están vacíos = 0
-                self.med_orig_cm_ancho.setText('0')
-            if len(self.med_orig_cm_alto.text()) == 0:
-                self.med_orig_cm_alto.setText('0')
-            self.med_final_cm_ancho.setText(str(extra + float(self.med_orig_cm_ancho.text())))
-            self.med_final_cm_alto.setText(str(extra + float(self.med_orig_cm_alto.text())))
-        # si el campo para pp se vacía o está vacío recalcular valores finales
-        else:
-            self.sumar_alto()
-            self.sumar_ancho()
+            print('Ey!')
+            pp = 0
+            var = 0
+        print('Ey!')
+        final_ancho = cm_ancho + pp + var
+        final_alto = cm_alto + pp + var
+        self.med_final_cm_ancho.setText(str(final_ancho))
+        self.med_final_cm_alto.setText(str(final_alto))
 
 
 stylesheet = '''
