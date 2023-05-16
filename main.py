@@ -30,6 +30,8 @@ class MainWindow(qtw.QWidget):
         self.med_orig_cm_ancho = qtw.QLineEdit()
         self.med_final_cm_alto = qtw.QLineEdit()
         self.med_final_cm_ancho = qtw.QLineEdit()
+        self.med_final_cm_ancho.setText('0')
+        self.med_final_cm_alto.setText('0')
         self.pp_cm = qtw.QLineEdit()
         self.var = qtw.QLineEdit()
         self.sup_m2 = qtw.QLineEdit()
@@ -144,8 +146,8 @@ class MainWindow(qtw.QWidget):
 
         # Medidas
         self.grid2.addWidget(qtw.QLabel('Med. Orig. cm.'), 1, 6, 2, 1)
-        self.grid2.addWidget(self.med_orig_cm_alto, 1, 7)
-        self.grid2.addWidget(self.med_orig_cm_ancho, 2, 7)
+        self.grid2.addWidget(self.med_orig_cm_ancho, 1, 7)
+        self.grid2.addWidget(self.med_orig_cm_alto, 2, 7)
 
         self.grid2.addWidget(qtw.QLabel('pp. cm'), 1, 8)
         self.grid2.addWidget(self.pp_cm, 1, 9)
@@ -153,8 +155,8 @@ class MainWindow(qtw.QWidget):
         self.grid2.addWidget(self.var, 2, 9)
 
         self.grid2.addWidget(qtw.QLabel('Med. Final cm.'), 4, 6, 2, 1)
-        self.grid2.addWidget(self.med_final_cm_alto, 4, 7)
-        self.grid2.addWidget(self.med_final_cm_ancho, 5, 7)
+        self.grid2.addWidget(self.med_final_cm_ancho, 4, 7)
+        self.grid2.addWidget(self.med_final_cm_alto, 5, 7)
 
         self.grid2.addWidget(qtw.QLabel('Sup. m2:'), 4, 8)
         self.grid2.addWidget(self.sup_m2, 4, 9)
@@ -303,30 +305,41 @@ class MainWindow(qtw.QWidget):
         self.combo8.setCompleter(self.completer_productos8)
 
         # Signals
-        self.combo1.activated.connect(lambda: self.complete(string=self.combo1.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo1)))
-        self.combo2.activated.connect(lambda: self.complete(string=self.combo2.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo2)))
-        self.combo3.activated.connect(lambda: self.complete(string=self.combo3.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo3)))
-        self.combo4.activated.connect(lambda: self.complete(string=self.combo4.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo4)))
-        self.combo5.activated.connect(lambda: self.complete(string=self.combo5.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo5)))
-        self.combo6.activated.connect(lambda: self.complete(string=self.combo6.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo6)))
-        self.combo7.activated.connect(lambda: self.complete(string=self.combo7.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo7)))
-        self.combo8.activated.connect(lambda: self.complete(string=self.combo8.currentText(),
-                                                            idx=self.grid2.indexOf(self.combo8)))
+        self.combo1.activated.connect(lambda: self.complete_products(string=self.combo1.currentText(),
+                                                                     idx=self.grid2.indexOf(self.combo1)))
+        self.combo2.activated.connect(lambda: self.complete_products(string=self.combo2.currentText(),
+                                                                     idx=self.grid2.indexOf(self.combo2)))
+        self.combo3.activated.connect(lambda: self.complete_products(string=self.combo3.currentText(),
+                                                                     idx=self.grid2.indexOf(self.combo3)))
+        self.combo4.activated.connect(lambda: self.complete_products(string=self.combo4.currentText(),
+                                                                     idx=self.grid2.indexOf(self.combo4)))
+        self.combo5.activated.connect(lambda: self.complete_products(string=self.combo5.currentText(),
+                                                                     idx=self.grid2.indexOf(self.combo5)))
+        self.combo6.activated.connect(lambda: self.complete_products(string=self.combo6.currentText(),
+                                                                     idx=self.grid2.indexOf(self.combo6)))
+        self.combo7.activated.connect(lambda: self.complete_products(string=self.combo7.currentText(),
+                                                                     idx=self.grid2.indexOf(self.combo7)))
+        self.combo8.activated.connect(lambda: self.complete_products(string=self.combo8.currentText(),
+                                                                     idx=self.grid2.indexOf(self.combo8)))
 
+        # Borrar
         self.btn_borrar.clicked.connect(self.borrar)
 
+        # Medidas
+        #self.med_orig_cm_ancho.textEdited.connect(
+        #    lambda: self.med_final_cm_ancho.setText(
+        #        str(float(self.med_orig_cm_ancho.text()) + float(self.med_final_cm_ancho.text()))))
+        #self.med_orig_cm_alto.textEdited.connect(
+        #    lambda: self.med_final_cm_alto.setText(
+        #        str(float(self.med_orig_cm_alto.text()) + float(self.med_final_cm_alto.text()))))
+        self.med_orig_cm_ancho.textChanged.connect(self.sumar_ancho)
+        self.med_orig_cm_alto.textChanged.connect(self.sumar_alto)
+        self.pp_cm.textChanged.connect(self.sumar_medida_pp)
         self.show()
 
     # Methods
-
-    def complete(self, string, idx):
+    # Form methods
+    def complete_products(self, string, idx):
         #print('Hey!')
         subset = self.productos[
             self.productos['DenominaciónCompleta'] == string]
@@ -341,6 +354,22 @@ class MainWindow(qtw.QWidget):
         except Exception as e:
             print(e)
 
+    def complete_from_client(self, string):
+        # Hace falta aclaración con respecto de los datos antes de implementar este método
+        subset = self.presupuesto[
+            self.presupuesto['Cliente'] == string
+        ]
+        self.fecha_rec.setText(subset['F_Recepción'].values[0])
+        self.fecha_entrega.setText(subset['F_Eentrega'].values[0])
+        self.fecha_realizacion.setText(subset['F_Realización'].values[0])
+        self.motivo.setText(subset['Motivo'].values[0])
+        for row in range(self.grid2.rowCount()):
+            if row == 7:
+                item = self.grid2.itemAtPosition(row, 0).widget()
+
+    def complete_from_work(self):
+        pass
+
     @qtc.pyqtSlot()
     def borrar(self):
         for i in range(self.grid1.count()):
@@ -353,7 +382,38 @@ class MainWindow(qtw.QWidget):
                 item.clearEditText()
             elif isinstance(item, qtw.QLineEdit):
                 item.clear()
+        self.med_final_cm_ancho.setText('0')
+        self.med_final_cm_alto.setText('0')
 
+    # Cálculos
+    @qtc.pyqtSlot()
+    def sumar_ancho(self):
+        if len(self.med_orig_cm_ancho.text()) > 0:
+            total_ancho = float(self.med_orig_cm_ancho.text())
+            self.med_final_cm_ancho.setText(str(total_ancho))
+        else:
+            self.med_final_cm_ancho.setText('0')
+
+    @qtc.pyqtSlot()
+    def sumar_alto(self):
+        if len(self.med_orig_cm_alto.text()) > 0:
+            total_alto = float(self.med_orig_cm_alto.text())
+            self.med_final_cm_alto.setText(str(total_alto))
+        else:
+            self.med_final_cm_alto.setText('0')
+
+    @qtc.pyqtSlot()
+    def sumar_medida_pp(self):
+        if len(self.med_final_cm_alto.text()) == 0 or len(self.med_final_cm_ancho.text()) == 0:
+            self.med_final_cm_ancho.setText('0')
+            self.med_final_cm_alto.setText('0')
+        extra = float(self.pp_cm.text()) * 2
+        original_ancho, original_alto = float(self.med_final_cm_ancho.text()),\
+                                        float(self.med_final_cm_alto.text())
+        original_ancho += extra
+        original_alto += extra
+        self.med_final_cm_ancho.setText(str(original_ancho))
+        self.med_final_cm_alto.setText(str(original_alto))
 
 stylesheet = '''
 
