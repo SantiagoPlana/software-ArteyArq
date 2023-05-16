@@ -326,26 +326,18 @@ class MainWindow(qtw.QWidget):
         self.btn_borrar.clicked.connect(self.borrar)
 
         # Medidas
-        #self.med_orig_cm_ancho.textEdited.connect(
-        #    lambda: self.med_final_cm_ancho.setText(
-        #        str(float(self.med_orig_cm_ancho.text()) + float(self.med_final_cm_ancho.text()))))
-        #self.med_orig_cm_alto.textEdited.connect(
-        #    lambda: self.med_final_cm_alto.setText(
-        #        str(float(self.med_orig_cm_alto.text()) + float(self.med_final_cm_alto.text()))))
-        self.med_orig_cm_ancho.textChanged.connect(self.mega)
-        self.med_orig_cm_alto.textChanged.connect(self.mega)
-        self.pp_cm.textChanged.connect(self.mega)
-        self.var.textChanged.connect(self.mega)
+        self.med_orig_cm_ancho.textChanged.connect(self.calculo_medidas)
+        self.med_orig_cm_alto.textChanged.connect(self.calculo_medidas)
+        self.pp_cm.textChanged.connect(self.calculo_medidas)
+        self.var.textChanged.connect(self.calculo_medidas)
         self.show()
 
     # Methods
     # Form methods
     def complete_products(self, string, idx):
-        #print('Hey!')
         subset = self.productos[
             self.productos['DenominaciónCompleta'] == string]
         row, column, cols, rows = self.grid2.getItemPosition(idx)
-        # print(row, column, cols, rows)
         stock = self.grid2.itemAtPosition(row, 5).widget()
         p_unit = self.grid2.itemAtPosition(row, 6).widget()
         total = self.grid2.itemAtPosition(row, 7).widget()
@@ -353,8 +345,9 @@ class MainWindow(qtw.QWidget):
             stock.setText(str(subset.loc[:, 'Stock'].values[0]))
             p_unit.setText(str(subset.loc[:, 'PrecioUnidad'].values[0]))
         except Exception as e:
-            print(e)
+            pass
 
+    # !Pendiente
     def complete_from_client(self, string):
         # Hace falta aclaración con respecto de los datos antes de implementar este método
         subset = self.presupuesto[
@@ -367,7 +360,7 @@ class MainWindow(qtw.QWidget):
         for row in range(self.grid2.rowCount()):
             if row == 7:
                 item = self.grid2.itemAtPosition(row, 0).widget()
-
+    # !Pendiente
     def complete_from_work(self):
         pass
 
@@ -388,7 +381,7 @@ class MainWindow(qtw.QWidget):
 
     # Cálculos
     @qtc.pyqtSlot()
-    def mega(self):
+    def calculo_medidas(self):
         if len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) > 0:
             cm_ancho = float(self.med_orig_cm_ancho.text())
             cm_alto = float(self.med_orig_cm_alto.text())
@@ -418,7 +411,19 @@ class MainWindow(qtw.QWidget):
         final_alto = cm_alto + pp + var
         self.med_final_cm_ancho.setText(str(final_ancho))
         self.med_final_cm_alto.setText(str(final_alto))
-
+        # Superficie (m2)
+        if len(self.pp_cm.text()) > 0:
+            sup = (float(self.med_final_cm_ancho.text()) / 100 *
+                   float(self.med_final_cm_alto.text()) / 100)
+            self.sup_m2.setText(str(sup))
+        else:
+            self.sup_m2.clear()
+        # Perímetro (mm)
+        # instructions or desired functionality unclear
+        if len(self.var.text()) > 0:
+            per = (float(self.med_final_cm_ancho.text()) * 2 +
+                   float(self.med_final_cm_alto.text()) * 2) / 10
+            self.per_ml.setText(str(per))
 
 stylesheet = '''
 
