@@ -407,13 +407,18 @@ class MainWindow(qtw.QWidget):
         if len(self.med_final_cm_alto.text()) == 0 or len(self.med_final_cm_ancho.text()) == 0:
             self.med_final_cm_ancho.setText('0')
             self.med_final_cm_alto.setText('0')
-        extra = float(self.pp_cm.text()) * 2
-        original_ancho, original_alto = float(self.med_final_cm_ancho.text()),\
-                                        float(self.med_final_cm_alto.text())
-        original_ancho += extra
-        original_alto += extra
-        self.med_final_cm_ancho.setText(str(original_ancho))
-        self.med_final_cm_alto.setText(str(original_alto))
+        if len(self.pp_cm.text()) > 0:
+            extra = float(self.pp_cm.text()) * 2
+            if len(self.med_orig_cm_ancho.text()) == 0 :
+                self.med_orig_cm_ancho.setText('0')
+            if len(self.med_orig_cm_alto.text()) == 0:
+                self.med_orig_cm_alto.setText('0')
+            self.med_final_cm_ancho.setText(str(extra + float(self.med_orig_cm_ancho.text())))
+            self.med_final_cm_alto.setText(str(extra + float(self.med_orig_cm_alto.text())))
+        else:
+            self.sumar_alto()
+            self.sumar_ancho()
+
 
 stylesheet = '''
 
