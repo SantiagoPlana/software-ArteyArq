@@ -1,6 +1,7 @@
 import sys
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
+from PyQt5.QtGui import QPixmap, QPainter, QDoubleValidator, QIcon
 import pandas as pd
 
 
@@ -304,7 +305,49 @@ class MainWindow(qtw.QWidget):
         self.combo7.setCompleter(self.completer_productos7)
         self.combo8.setCompleter(self.completer_productos8)
 
-        # Signals
+        # Validators
+        self.validator = QDoubleValidator()
+        self.med_orig_cm_ancho.setValidator(self.validator)
+        self.med_final_cm_alto.setValidator(self.validator)
+        self.pp_cm.setValidator(self.validator)
+        self.var.setValidator(self.validator)
+
+        # Non-editable
+        self.med_final_cm_ancho.setEnabled(False)
+        self.med_final_cm_alto.setEnabled(False)
+        self.sup_m2.setEnabled(False)
+        self.per_ml.setEnabled(False)
+        self.fecha_realizacion.setEnabled(False)
+
+        self.stock1.setEnabled(False)
+        self.stock2.setEnabled(False)
+        self.stock3.setEnabled(False)
+        self.stock4.setEnabled(False)
+        self.stock5.setEnabled(False)
+        self.stock6.setEnabled(False)
+        self.stock7.setEnabled(False)
+        self.stock8.setEnabled(False)
+
+        self.punitario1.setEnabled(False)
+        self.punitario2.setEnabled(False)
+        self.punitario3.setEnabled(False)
+        self.punitario4.setEnabled(False)
+        self.punitario5.setEnabled(False)
+        self.punitario6.setEnabled(False)
+        self.punitario7.setEnabled(False)
+        self.punitario8.setEnabled(False)
+
+        self.total1.setEnabled(False)
+        self.total2.setEnabled(False)
+        self.total3.setEnabled(False)
+        self.total4.setEnabled(False)
+        self.total5.setEnabled(False)
+        self.total6.setEnabled(False)
+        self.total7.setEnabled(False)
+        self.total8.setEnabled(False)
+
+
+        ####Signals####
         self.combo1.activated.connect(lambda: self.complete_products(string=self.combo1.currentText(),
                                                                      idx=self.grid2.indexOf(self.combo1)))
         self.combo2.activated.connect(lambda: self.complete_products(string=self.combo2.currentText(),
@@ -360,6 +403,7 @@ class MainWindow(qtw.QWidget):
         for row in range(self.grid2.rowCount()):
             if row == 7:
                 item = self.grid2.itemAtPosition(row, 0).widget()
+
     # !Pendiente
     def complete_from_work(self):
         pass
@@ -382,52 +426,55 @@ class MainWindow(qtw.QWidget):
     # Cálculos
     @qtc.pyqtSlot()
     def calculo_medidas(self):
-        if len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) > 0:
-            cm_ancho = float(self.med_orig_cm_ancho.text())
-            cm_alto = float(self.med_orig_cm_alto.text())
-        elif len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) < 1:
-            cm_ancho = float(self.med_orig_cm_ancho.text())
-            cm_alto = 0
-        elif len(self.med_orig_cm_ancho.text()) < 1 and len(self.med_orig_cm_alto.text()) > 0:
-            cm_ancho = 0
-            cm_alto = float(self.med_orig_cm_alto.text())
-        else:
-            cm_ancho = 0
-            cm_alto = 0
-        # check pp y var
-        if len(self.pp_cm.text()) > 0 and len(self.var.text()) > 0:
-            pp = float(self.pp_cm.text()) * 2
-            var = float(self.var.text()) * 2
-        elif len(self.pp_cm.text()) > 0 and len(self.var.text()) < 1:
-            pp = float(self.pp_cm.text()) * 2
-            var = 0
-        elif len(self.pp_cm.text()) < 1 and len(self.var.text()) > 0:
-            pp = 0
-            var = float(self.var.text()) * 2
-        else:
-            pp = 0
-            var = 0
-        final_ancho = cm_ancho + pp + var
-        final_alto = cm_alto + pp + var
-        self.med_final_cm_ancho.setText(str(final_ancho))
-        self.med_final_cm_alto.setText(str(final_alto))
-        # Superficie (m2)
-        if len(self.pp_cm.text()) > 0:
-            sup = (float(self.med_final_cm_ancho.text()) / 100 *
-                   float(self.med_final_cm_alto.text()) / 100)
-            self.sup_m2.setText(str(sup))
-        else:
-            self.sup_m2.clear()
-        # Perímetro (mm)
-        # instructions or desired functionality unclear
-        if len(self.var.text()) > 0:
-            per = (float(self.med_final_cm_ancho.text()) +
-                   float(self.med_final_cm_alto.text()) * 2) / 1000
-            self.per_ml.setText(str(per))
-        else:
-            self.var.clear()
+        # checkeo medidas
+        try:
+            if len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) > 0:
+                cm_ancho = float(self.med_orig_cm_ancho.text())
+                cm_alto = float(self.med_orig_cm_alto.text())
+            elif len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) < 1:
+                cm_ancho = float(self.med_orig_cm_ancho.text())
+                cm_alto = 0
+            elif len(self.med_orig_cm_ancho.text()) < 1 and len(self.med_orig_cm_alto.text()) > 0:
+                cm_ancho = 0
+                cm_alto = float(self.med_orig_cm_alto.text())
+            else:
+                cm_ancho = 0
+                cm_alto = 0
+            # check pp y var
+            if len(self.pp_cm.text()) > 0 and len(self.var.text()) > 0:
+                pp = float(self.pp_cm.text()) * 2
+                var = float(self.var.text()) * 2
+            elif len(self.pp_cm.text()) > 0 and len(self.var.text()) < 1:
+                pp = float(self.pp_cm.text()) * 2
+                var = 0
+            elif len(self.pp_cm.text()) < 1 and len(self.var.text()) > 0:
+                pp = 0
+                var = float(self.var.text()) * 2
+            else:
+                pp = 0
+                var = 0
+            final_ancho = cm_ancho + pp + var
+            final_alto = cm_alto + pp + var
+            self.med_final_cm_ancho.setText(str(final_ancho))
+            self.med_final_cm_alto.setText(str(final_alto))
+            # Superficie (m2)
+            if len(self.pp_cm.text()) > 0:
+                sup = (float(self.med_final_cm_ancho.text()) / 100 *
+                       float(self.med_final_cm_alto.text()) / 100)
+                self.sup_m2.setText(str(sup))
+            else:
+                self.sup_m2.clear()
+            # Perímetro (mm)
+            # instructions or desired functionality unclear
+            if len(self.var.text()) > 0:
+                per = ((float(self.med_final_cm_ancho.text())
+                        + float(self.med_final_cm_alto.text())) * 2) / 1000
+                self.per_ml.setText(str(per))
+            else:
+                self.per_ml.clear()
+        except Exception as e:
+            pass
 
-    
 stylesheet = '''
 
 #titulo {
@@ -462,7 +509,11 @@ font-size: 17pt;
 }
 QLineEdit {
     border: 1px solid black;
-    background-color: lightgray;
+    background-color: ivory;
+}
+QLineEdit:!enabled {
+background-color: lightgray;
+font-color: green;
 }
 QComboBox {
 background-color: ivory;
