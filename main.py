@@ -364,6 +364,23 @@ class MainWindow(qtw.QWidget):
                                                                      idx=self.grid2.indexOf(self.combo7)))
         self.combo8.activated.connect(lambda: self.complete_products(string=self.combo8.currentText(),
                                                                      idx=self.grid2.indexOf(self.combo8)))
+        # Borrar lineedits de precios y stock cuando se borra el producto
+        self.combo1.lineEdit().textEdited.connect(lambda:
+                                                  self.borrar_precios(self.grid2.indexOf(self.combo1)))
+        self.combo2.lineEdit().textEdited.connect(lambda:
+                                                  self.borrar_precios(self.grid2.indexOf(self.combo2)))
+        self.combo3.lineEdit().textEdited.connect(lambda:
+                                                  self.borrar_precios(self.grid2.indexOf(self.combo3)))
+        self.combo4.lineEdit().textEdited.connect(lambda:
+                                                  self.borrar_precios(self.grid2.indexOf(self.combo4)))
+        self.combo5.lineEdit().textEdited.connect(lambda:
+                                                  self.borrar_precios(self.grid2.indexOf(self.combo5)))
+        self.combo6.lineEdit().textEdited.connect(lambda:
+                                                  self.borrar_precios(self.grid2.indexOf(self.combo6)))
+        self.combo7.lineEdit().textEdited.connect(lambda:
+                                                  self.borrar_precios(self.grid2.indexOf(self.combo7)))
+        self.combo8.lineEdit().textEdited.connect(lambda:
+                                                  self.borrar_precios(self.grid2.indexOf(self.combo8)))
 
         # Borrar
         self.btn_borrar.clicked.connect(self.borrar)
@@ -373,10 +390,13 @@ class MainWindow(qtw.QWidget):
         self.med_orig_cm_alto.textChanged.connect(self.calculo_medidas)
         self.pp_cm.textChanged.connect(self.calculo_medidas)
         self.var.textChanged.connect(self.calculo_medidas)
+
+        # Show
         self.show()
 
     # Methods
     # Form methods
+    @qtc.pyqtSlot()
     def complete_products(self, string, idx):
         subset = self.productos[
             self.productos['DenominaciónCompleta'] == string]
@@ -389,6 +409,18 @@ class MainWindow(qtw.QWidget):
             p_unit.setText(str(subset.loc[:, 'PrecioUnidad'].values[0]))
         except Exception as e:
             pass
+
+    @qtc.pyqtSlot()
+    def borrar_precios(self, idx):
+        if len(self.sender().text()) == 0:
+            try:
+                print(idx)
+                row, column, cols, rows = self.grid2.getItemPosition(idx)
+                self.grid2.itemAtPosition(row, 5).widget().clear()
+                self.grid2.itemAtPosition(row, 6).widget().clear()
+                self.grid2.itemAtPosition(row, 7).widget().clear()
+            except Exception as e:
+                print(e)
 
     # !Pendiente
     def complete_from_client(self, string):
@@ -474,6 +506,7 @@ class MainWindow(qtw.QWidget):
                 self.per_ml.clear()
         except Exception as e:
             pass
+
 
 stylesheet = '''
 
