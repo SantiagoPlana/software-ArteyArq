@@ -391,6 +391,11 @@ class MainWindow(qtw.QWidget):
         self.pp_cm.textChanged.connect(self.calculo_medidas)
         self.var.textChanged.connect(self.calculo_medidas)
 
+        # Otros
+        self.p_otro1.textChanged.connect(self.display_total)
+        self.p_otro2.textChanged.connect(self.display_total)
+        self.p_otro3.textChanged.connect(self.display_total)
+
         # Show
         self.show()
 
@@ -404,9 +409,9 @@ class MainWindow(qtw.QWidget):
         stock = self.grid2.itemAtPosition(row, 5).widget()
         p_unit = self.grid2.itemAtPosition(row, 6).widget()
         #total = self.grid2.itemAtPosition(row, 7).widget()
-        if len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) > 0:
-            ancho = float(self.med_orig_cm_ancho.text())
-            alto = float(self.med_orig_cm_alto.text())
+        if len(self.med_final_cm_ancho.text()) > 0 and len(self.med_final_cm_alto.text()) > 0:
+            ancho = float(self.med_final_cm_ancho.text())
+            alto = float(self.med_final_cm_alto.text())
             self.calculo_total(ancho, alto)
         try:
             stock.setText(str(subset.loc[:, 'Stock'].values[0]))
@@ -424,6 +429,7 @@ class MainWindow(qtw.QWidget):
                 self.grid2.itemAtPosition(row, 6).widget().clear()
                 self.grid2.itemAtPosition(row, 7).widget().clear()
                 self.display_total()
+                #self.display_p_unitario()
             except Exception as e:
                 print(e)
 
@@ -460,6 +466,7 @@ class MainWindow(qtw.QWidget):
         self.med_final_cm_ancho.setText('0')
         self.med_final_cm_alto.setText('0')
         self.display_total()
+        #self.display_p_unitario()
 
     # Cálculos
     @qtc.pyqtSlot()
@@ -516,6 +523,7 @@ class MainWindow(qtw.QWidget):
             pass
 
     def calculo_total(self, ancho, alto):
+        print(ancho, alto)
         col = 6
         # si ya hay items elegidos:
         for row in range(8, 16):
@@ -524,16 +532,33 @@ class MainWindow(qtw.QWidget):
                 por_m2 = float(widget.text())
                 metros2 = (ancho / 100) * (alto / 100)
                 p_total = por_m2 * metros2
+                p_total = '%.2f' % p_total
                 self.grid2.itemAtPosition(row, 7).widget().setText(str(p_total))
         self.display_total()
+        #self.display_p_unitario()
+
     # Display
     def display_total(self):
         total = 0
+        for row in range(8, 20):
+            if row != 16:
+                item = self.grid2.itemAtPosition(row, 7).widget()
+                if isinstance(item, qtw.QLineEdit):
+                    text = self.grid2.itemAtPosition(row, 7).widget().text()
+                    if len(text) > 0:
+                        total += float(text)
+        total = '%.2f' % total
+        self.total.setText(str(total))
+
+    # no implementada
+    def display_p_unitario(self):
+        total = 0
         for row in range(8, 16):
-            text = self.grid2.itemAtPosition(row, 7).widget().text()
+            text = self.grid2.itemAtPosition(row, 6).widget().text()
             if len(text) > 0:
                 total += float(text)
-        self.total.setText(str(total))
+        total = '%.2f' % total
+        self.punit.setText(str(total))
 
 
 stylesheet = '''
@@ -587,6 +612,7 @@ font-size: 11pt;
 padding: 6px;
 }
 '''
+
 if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
     app.setStyleSheet(stylesheet)
