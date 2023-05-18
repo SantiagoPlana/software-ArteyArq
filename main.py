@@ -423,6 +423,7 @@ class MainWindow(qtw.QWidget):
                 self.grid2.itemAtPosition(row, 5).widget().clear()
                 self.grid2.itemAtPosition(row, 6).widget().clear()
                 self.grid2.itemAtPosition(row, 7).widget().clear()
+                self.display_total()
             except Exception as e:
                 print(e)
 
@@ -458,6 +459,7 @@ class MainWindow(qtw.QWidget):
                 item.clear()
         self.med_final_cm_ancho.setText('0')
         self.med_final_cm_alto.setText('0')
+        self.display_total()
 
     # Cálculos
     @qtc.pyqtSlot()
@@ -523,6 +525,15 @@ class MainWindow(qtw.QWidget):
                 metros2 = (ancho / 100) * (alto / 100)
                 p_total = por_m2 * metros2
                 self.grid2.itemAtPosition(row, 7).widget().setText(str(p_total))
+        self.display_total()
+    # Display
+    def display_total(self):
+        total = 0
+        for row in range(8, 16):
+            text = self.grid2.itemAtPosition(row, 7).widget().text()
+            if len(text) > 0:
+                total += float(text)
+        self.total.setText(str(total))
 
 
 stylesheet = '''
