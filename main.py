@@ -403,7 +403,11 @@ class MainWindow(qtw.QWidget):
         row, column, cols, rows = self.grid2.getItemPosition(idx)
         stock = self.grid2.itemAtPosition(row, 5).widget()
         p_unit = self.grid2.itemAtPosition(row, 6).widget()
-        total = self.grid2.itemAtPosition(row, 7).widget()
+        #total = self.grid2.itemAtPosition(row, 7).widget()
+        if len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) > 0:
+            ancho = float(self.med_orig_cm_ancho.text())
+            alto = float(self.med_orig_cm_alto.text())
+            self.calculo_total(ancho, alto)
         try:
             stock.setText(str(subset.loc[:, 'Stock'].values[0]))
             p_unit.setText(str(subset.loc[:, 'PrecioUnidad'].values[0]))
@@ -511,6 +515,7 @@ class MainWindow(qtw.QWidget):
 
     def calculo_total(self, ancho, alto):
         col = 6
+        # si ya hay items elegidos:
         for row in range(8, 16):
             widget = self.grid2.itemAtPosition(row, col).widget()
             if len(widget.text()) > 0:
