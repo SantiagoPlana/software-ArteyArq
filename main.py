@@ -18,6 +18,10 @@ class MainWindow(qtw.QWidget):
 
         # self.showFullScreen()
 
+        self.menu = qtw.QMenuBar(objectName='menu')
+        self.menu.addAction('Abrir tabla productos')
+        self.menu.addAction('Abrir tabla de presupuestos')
+
         self.title = qtw.QLabel('Presupuesto', objectName='titulo')
         self.logo = QPixmap('aya.jpeg')
         self.image = qtw.QLabel(self)
@@ -122,6 +126,9 @@ class MainWindow(qtw.QWidget):
         self.grid2 = qtw.QGridLayout()
         box1 = qtw.QGroupBox(' ')
         self.setLayout(main_layout)
+
+        main_layout.addWidget(self.menu)
+        # main_layout.addWidget(self.bar)
         main_layout.addLayout(self.grid1)
         self.grid1.addWidget(self.title, 0, 0, 1, 2)
         self.grid1.addWidget(self.image, 0, 3, 1, 2)
@@ -569,35 +576,32 @@ class MainWindow(qtw.QWidget):
 
 
 stylesheet = '''
-
 #titulo {
-color: #000115;
+color: #0D1321;
 font: bold;
 font-size: 22pt;
 font-family: Trebuchet MS;
 }
-QWidget {
-    background-color: antiquewhite;
-    }
+QWidget {background-color: #D6DDCF;}
 
 QLabel {
 font-size: 11pt;
-color: #000115;
+color: #0D1321;
 }
 #preciounitario {
 border: 3px solid gray;
-background-color: gray;
+background-color: #BCC8C8;
 border-style:outset;
 border-width:3px;
-border-color:bisque;
+border-color:ivory;
 font-size: 17pt;
 }
 #preciototal {
 border: 3px solid gray;
-background-color: gray;
+background-color: #BCC8C8;
 border-style:outset;
 border-width:3px;
-border-color:cornsilk;
+border-color:ivory;
 font-size: 17pt;
 }
 QLineEdit {
@@ -605,19 +609,20 @@ QLineEdit {
     background-color: ivory;
 }
 QLineEdit:!enabled {
-background-color: lightgray;
-font-color: green;
+background-color: #BCC8C8;
+text-color: green;
 }
 QComboBox {
 background-color: ivory;
 }
 QPushButton {
-border-style: outset;
-border-width: 3px;
-border-color: #000115;
 font-size: 11pt;
-padding: 6px;
+padding: 3px;
 }
+QPushButton:hover {background: #F5A68E;}
+#menu {spacing: 3px;}
+#menu::item {padding: 1px 4px; background: transparent; border-radius: 4px;}
+#menu::item:selected {background: #BAB3A0;}
 '''
 
 if __name__ == '__main__':
