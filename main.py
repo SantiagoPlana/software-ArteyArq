@@ -504,8 +504,20 @@ class MainWindow(qtw.QWidget):
                 self.per_ml.setText(str(per))
             else:
                 self.per_ml.clear()
+            #print('function call')
+            self.calculo_total(final_ancho, final_alto)
         except Exception as e:
             pass
+
+    def calculo_total(self, ancho, alto):
+        col = 6
+        for row in range(8, 16):
+            widget = self.grid2.itemAtPosition(row, col).widget()
+            if len(widget.text()) > 0:
+                por_m2 = float(widget.text())
+                metros2 = (ancho / 100) * (alto / 100)
+                p_total = por_m2 * metros2
+                self.grid2.itemAtPosition(row, 7).widget().setText(str(p_total))
 
 
 stylesheet = '''
