@@ -425,10 +425,10 @@ class MainWindow(qtw.QWidget):
         self.btn_borrar.clicked.connect(self.borrar)
 
         # Medidas
-        self.med_orig_cm_ancho.textChanged.connect(self.calculo_medidas)
-        self.med_orig_cm_alto.textChanged.connect(self.calculo_medidas)
-        self.pp_cm.textChanged.connect(self.calculo_medidas)
-        self.var.textChanged.connect(self.calculo_medidas)
+        self.med_orig_cm_ancho.textChanged.connect(self.calculo_medidas_opt)
+        self.med_orig_cm_alto.textChanged.connect(self.calculo_medidas_opt)
+        self.pp_cm.textChanged.connect(self.calculo_medidas_opt)
+        self.var.textChanged.connect(self.calculo_medidas_opt)
 
         # Otros
         self.p_otro1.textChanged.connect(self.display_p_unitario)
@@ -510,58 +510,33 @@ class MainWindow(qtw.QWidget):
         #self.display_p_unitario()
 
     # Cálculos
+
     @qtc.pyqtSlot()
-    def calculo_medidas(self):
-        # checkeo medidas
-        try:
-            if len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) > 0:
-                cm_ancho = float(self.med_orig_cm_ancho.text())
-                cm_alto = float(self.med_orig_cm_alto.text())
-            elif len(self.med_orig_cm_ancho.text()) > 0 and len(self.med_orig_cm_alto.text()) < 1:
-                cm_ancho = float(self.med_orig_cm_ancho.text())
-                cm_alto = 0
-            elif len(self.med_orig_cm_ancho.text()) < 1 and len(self.med_orig_cm_alto.text()) > 0:
-                cm_ancho = 0
-                cm_alto = float(self.med_orig_cm_alto.text())
+    def calculo_medidas_opt(self):
+        # medidas originales
+        ancho = self.med_orig_cm_ancho.text()
+        alto = self.med_orig_cm_alto.text()
+        pp = self.pp_cm.text()
+        var = self.var.text()
+        lst = [ancho, alto, pp, var]
+        for txt in lst:
+            if len(txt) == 0:
+                lst[lst.index(txt)] = 0
             else:
-                cm_ancho = 0
-                cm_alto = 0
-            # check pp y var
-            if len(self.pp_cm.text()) > 0 and len(self.var.text()) > 0:
-                pp = float(self.pp_cm.text()) * 2
-                var = float(self.var.text()) * 2
-            elif len(self.pp_cm.text()) > 0 and len(self.var.text()) < 1:
-                pp = float(self.pp_cm.text()) * 2
-                var = 0
-            elif len(self.pp_cm.text()) < 1 and len(self.var.text()) > 0:
-                pp = 0
-                var = float(self.var.text()) * 2
-            else:
-                pp = 0
-                var = 0
-            final_ancho = cm_ancho + pp + var
-            final_alto = cm_alto + pp + var
-            self.med_final_cm_ancho.setText(str(final_ancho))
-            self.med_final_cm_alto.setText(str(final_alto))
-            # Superficie (m2)
-            if len(self.pp_cm.text()) > 0:
-                sup = (float(self.med_final_cm_ancho.text()) / 100 *
-                       float(self.med_final_cm_alto.text()) / 100)
-                self.sup_m2.setText(str(sup))
-            else:
-                self.sup_m2.clear()
-            # Perímetro (mm)
-            # instructions or desired functionality unclear
-            if len(self.var.text()) > 0:
-                per = ((float(self.med_final_cm_ancho.text())
-                        + float(self.med_final_cm_alto.text())) * 2) / 1000
-                self.per_ml.setText(str(per))
-            else:
-                self.per_ml.clear()
-            #print('function call')
-            self.calculo_total(final_ancho, final_alto)
-        except Exception as e:
-            pass
+                lst[lst.index(txt)] = float(txt)
+        final_ancho = lst[0] + (lst[2] * 2) + (lst[3] * 2)
+        final_alto = lst[1] + (lst[2] * 2) + (lst[3] * 2)
+        sup_m2 = final_ancho / 100 * final_alto / 100
+        per_ml = (final_ancho * 2 + final_alto * 2) / 100
+
+        sup_m2 = '%.2f' % sup_m2
+        per_ml = '%.2f' % per_ml
+        self.med_final_cm_ancho.setText(str(final_ancho))
+        self.med_final_cm_alto.setText(str(final_alto))
+        self.sup_m2.setText(str(sup_m2))
+        self.per_ml.setText(str(per_ml))
+
+        self.calculo_total(final_ancho, final_alto)
 
     def calculo_total(self, ancho, alto):
         # Calcula el total unitario del trabajo
