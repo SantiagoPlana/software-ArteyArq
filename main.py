@@ -539,17 +539,33 @@ class MainWindow(qtw.QWidget):
         self.calculo_total(final_ancho, final_alto)
 
     def calculo_total(self, ancho, alto):
-        # Calcula el total unitario del trabajo
+        # Calcula el total unitario para cada item
         # print(ancho, alto)
         col = 6
+        p_total = 0
         # si ya hay items elegidos:
         for row in range(8, 16):
             widget = self.grid2.itemAtPosition(row, col).widget()
             if len(widget.text()) > 0:
-                por_m2 = float(widget.text())
-                metros2 = (ancho / 100) * (alto / 100)
-                p_total = por_m2 * metros2
-                p_total = '%.2f' % p_total
+                # agarrar identificador de item y hacer cálculo según tipo en (row, 0)
+                # varilla - m; vidrio, espejo, chapadur y  pp - sup.; pintura y patina - m y sup.
+                item_id = self.grid2.itemAtPosition(row, 1).widget().lineEdit().text()[-1]
+                # print('ID: ' + item_id)
+                if item_id == 'S':
+                    if len(self.sup_m2.text()) != 0:
+                        p_total = float(widget.text()) * float(self.sup_m2.text())
+                        p_total = '%.2f' % p_total
+                elif item_id == 'L' or item_id == 'P':
+                    if len(self.per_ml.text()) != 0:
+                        p_total = float(widget.text()) * float(self.per_ml.text())
+                        p_total = '%.2f' % p_total
+                elif item_id == 'U':
+                    p_total = widget.text()
+                else:
+                    por_m2 = float(widget.text())
+                    metros2 = (ancho / 100) * (alto / 100)
+                    p_total = por_m2 * metros2
+                    p_total = '%.2f' % p_total
                 self.grid2.itemAtPosition(row, 7).widget().setText(str(p_total))
         self.display_total()
         self.display_p_unitario()
