@@ -23,9 +23,13 @@ class MainWindow(qtw.QWidget):
         self.menu.addAction('Abrir tabla de presupuestos')
 
         self.title = qtw.QLabel('Presupuesto', objectName='titulo')
-        self.logo = QPixmap('aya.jpeg')
+        self.title.setAlignment(qtc.Qt.AlignTop)
+        # Logo
+        self.logo = QPixmap('png_aya.png')
         self.image = qtw.QLabel(self)
-        self.image.setPixmap(self.logo)
+        scaled_pixmap = self.logo.scaled(120, 120, qtc.Qt.KeepAspectRatio)
+        self.image.setPixmap(scaled_pixmap)
+        self.image.setAlignment(qtc.Qt.AlignRight)
 
         self.presupuestos_pendientes = qtw.QComboBox()
         self.clientes_combo = qtw.QComboBox()
@@ -133,6 +137,7 @@ class MainWindow(qtw.QWidget):
         main_layout.addLayout(self.grid1)
         self.grid1.addWidget(self.title, 0, 0, 1, 2)
         self.grid1.addWidget(self.image, 0, 3, 1, 2)
+
         self.grid1.addItem(qtw.QSpacerItem(10, 20), 1, 0)
         self.grid1.addWidget(qtw.QLabel('Presupuestos pendientes'), 2, 1)
         self.grid1.addWidget(self.presupuestos_pendientes, 2, 2)
@@ -604,52 +609,57 @@ class MainWindow(qtw.QWidget):
 
 stylesheet = '''
 #titulo {
-color: #0D1321;
+color: #FF9B99;
 font: bold;
-font-size: 22pt;
+font-size: 25pt;
 font-family: Trebuchet MS;
 }
-QWidget {background-color: #D6DDCF;}
+QWidget {background-color: #2F5260;}
 
 QLabel {
-font-size: 11pt;
-color: #0D1321;
+font-size: 15pt;
+color: #F3E5CE;
 }
 #preciounitario {
 border: 3px solid gray;
-background-color: #BCC8C8;
+background-color: #5C7070;
 border-style:outset;
 border-width:3px;
 border-color:ivory;
 font-size: 17pt;
+
 }
 #preciototal {
 border: 3px solid gray;
-background-color: #BCC8C8;
+background-color: #5C7070;
 border-style:outset;
 border-width:3px;
 border-color:ivory;
 font-size: 17pt;
 }
 QLineEdit {
+    font-size: 13pt;
     border: 1px solid black;
-    background-color: ivory;
+    background-color: ivory;    
 }
 QLineEdit:!enabled {
 background-color: #BCC8C8;
 color: #1D1E2C;
 }
 QComboBox {
+font-size: 13pt;
 background-color: ivory;
+color: black
 }
 QPushButton {
-font-size: 11pt;
+font-size: 13pt;
 padding: 3px;
+color: #F3E5CE;
 }
-QPushButton:hover {background: #F5A68E;}
-#menu {spacing: 3px;}
-#menu::item {padding: 1px 4px; background: transparent; border-radius: 4px;}
-#menu::item:selected {background: ivory;}
+QPushButton:hover {background: #A23E48;}
+#menu {spacing: 3px; font-size: 10pt; color: #F3E5CE;}
+#menu::item {padding: 1px 4px; background: transparent; border-radius: 6px;}
+#menu::item:selected {background: #FF9B99;}
 
 '''
 
