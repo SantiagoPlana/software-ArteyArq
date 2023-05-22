@@ -38,7 +38,7 @@ class MainWindow(qtw.QWidget):
 
         self.cliente = qtw.QLineEdit()
         self.motivo = qtw.QLineEdit()
-        self.cantidad = qtw.QLineEdit()
+        self.cantidad = qtw.QLineEdit('1')
         self.med_orig_cm_alto = qtw.QLineEdit()
         self.med_orig_cm_ancho = qtw.QLineEdit()
         self.med_final_cm_alto = qtw.QLineEdit()
@@ -439,8 +439,23 @@ class MainWindow(qtw.QWidget):
         self.p_otro1.textChanged.connect(self.display_p_unitario)
         self.p_otro2.textChanged.connect(self.display_p_unitario)
         self.p_otro3.textChanged.connect(self.display_p_unitario)
+        self.p_otro1.textChanged.connect(self.display_total)
+        self.p_otro2.textChanged.connect(self.display_total)
+        self.p_otro3.textChanged.connect(self.display_total)
 
         self.cantidad.textChanged.connect(self.display_total)
+
+        # stylesheet
+        self.completer_productos.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_productos2.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_productos3.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_productos4.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_productos5.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_productos6.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_productos7.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_productos8.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_clientes.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_trabajos.popup().setStyleSheet("color: white; font-size: 13pt;")
 
         # Show
         self.show()
@@ -640,16 +655,29 @@ font-size: 17pt;
 QLineEdit {
     font-size: 13pt;
     border: 1px solid black;
-    background-color: ivory;    
+    background-color: ivory;   
+    selection-background-color: #FF9B99;
+    selection-color: white; 
 }
 QLineEdit:!enabled {
 background-color: #BCC8C8;
 color: #1D1E2C;
 }
 QComboBox {
+subcontrol-origin: padding;
 font-size: 13pt;
 background-color: ivory;
-color: black
+color: black;
+selection-background-color: #FF9B99;
+selection-color: white;
+border-style: solid;
+border-radius: 5px;
+}
+QComboBox:hover {
+border: 1px #FF9B99;
+}
+QComboBox QAbstractItemView {
+color: white;
 }
 QPushButton {
 font-size: 13pt;
