@@ -127,7 +127,8 @@ class MainWindow(qtw.QWidget):
         box1 = qtw.QGroupBox(' ')
         self.setLayout(main_layout)
 
-        main_layout.addWidget(self.menu)
+        # main_layout.addWidget(self.menu)
+        main_layout.setMenuBar(self.menu)
         # main_layout.addWidget(self.bar)
         main_layout.addLayout(self.grid1)
         self.grid1.addWidget(self.title, 0, 0, 1, 2)
@@ -264,6 +265,30 @@ class MainWindow(qtw.QWidget):
 
 
         # Productos
+        self.combo1.addItem('')
+        self.combo1.addItems(
+            self.productos.loc[:, 'DenominaciónCompleta'])
+        self.combo2.addItem('')
+        self.combo2.addItems(
+            self.productos.loc[:, 'DenominaciónCompleta'])
+        self.combo3.addItem('')
+        self.combo3.addItems(
+            self.productos.loc[:, 'DenominaciónCompleta'])
+        self.combo4.addItem('')
+        self.combo4.addItems(
+            self.productos.loc[:, 'DenominaciónCompleta'])
+        self.combo5.addItem('')
+        self.combo5.addItems(
+            self.productos.loc[:, 'DenominaciónCompleta'])
+        self.combo6.addItem('')
+        self.combo6.addItems(
+            self.productos.loc[:, 'DenominaciónCompleta'])
+        self.combo7.addItem('')
+        self.combo7.addItems(
+            self.productos.loc[:, 'DenominaciónCompleta'])
+        self.combo8.addItem('')
+        self.combo8.addItems(
+            self.productos.loc[:, 'DenominaciónCompleta'])
         # Instanciamos completers
         # Lamentablemente hay que setear un completer por combobox o si no se borran los valores de uno
         # cuando se modifica otro...
@@ -406,9 +431,11 @@ class MainWindow(qtw.QWidget):
         self.var.textChanged.connect(self.calculo_medidas)
 
         # Otros
-        self.p_otro1.textChanged.connect(self.display_total)
-        self.p_otro2.textChanged.connect(self.display_total)
-        self.p_otro3.textChanged.connect(self.display_total)
+        self.p_otro1.textChanged.connect(self.display_p_unitario)
+        self.p_otro2.textChanged.connect(self.display_p_unitario)
+        self.p_otro3.textChanged.connect(self.display_p_unitario)
+
+        self.cantidad.textChanged.connect(self.display_total)
 
         # Show
         self.show()
@@ -537,7 +564,8 @@ class MainWindow(qtw.QWidget):
             pass
 
     def calculo_total(self, ancho, alto):
-        print(ancho, alto)
+        # Calcula el total unitario del trabajo
+        # print(ancho, alto)
         col = 6
         # si ya hay items elegidos:
         for row in range(8, 16):
@@ -549,28 +577,36 @@ class MainWindow(qtw.QWidget):
                 p_total = '%.2f' % p_total
                 self.grid2.itemAtPosition(row, 7).widget().setText(str(p_total))
         self.display_total()
-        #self.display_p_unitario()
+        self.display_p_unitario()
 
     # Display
     def display_total(self):
+        # Muestra el total en la QLabel correspondiente
+        total = 0
+        if len(self.cantidad.text()) == 0:
+            cantidad = 0
+        elif len(self.cantidad.text()) != 0:
+            cantidad = int(self.cantidad.text())
+            for row in range(8, 20):
+                if row != 16:
+                    item = self.grid2.itemAtPosition(row, 7).widget()
+                    if isinstance(item, qtw.QLineEdit):
+                        text = self.grid2.itemAtPosition(row, 7).widget().text()
+                        if len(text) > 0:
+                            total += float(text)
+        total = total * cantidad
+        total = '%.2f' % total
+        self.total.setText(str(total))
+
+    def display_p_unitario(self):
         total = 0
         for row in range(8, 20):
             if row != 16:
                 item = self.grid2.itemAtPosition(row, 7).widget()
                 if isinstance(item, qtw.QLineEdit):
-                    text = self.grid2.itemAtPosition(row, 7).widget().text()
+                    text = item.text()
                     if len(text) > 0:
                         total += float(text)
-        total = '%.2f' % total
-        self.total.setText(str(total))
-
-    # no implementada
-    def display_p_unitario(self):
-        total = 0
-        for row in range(8, 16):
-            text = self.grid2.itemAtPosition(row, 6).widget().text()
-            if len(text) > 0:
-                total += float(text)
         total = '%.2f' % total
         self.punit.setText(str(total))
 
@@ -610,7 +646,7 @@ QLineEdit {
 }
 QLineEdit:!enabled {
 background-color: #BCC8C8;
-text-color: green;
+color: #1D1E2C;
 }
 QComboBox {
 background-color: ivory;
@@ -622,7 +658,8 @@ padding: 3px;
 QPushButton:hover {background: #F5A68E;}
 #menu {spacing: 3px;}
 #menu::item {padding: 1px 4px; background: transparent; border-radius: 4px;}
-#menu::item:selected {background: #BAB3A0;}
+#menu::item:selected {background: ivory;}
+
 '''
 
 if __name__ == '__main__':
