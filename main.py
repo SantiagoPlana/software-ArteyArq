@@ -100,13 +100,16 @@ class Tabla(qtw.QDialog):
 
         self.setWindowTitle('Tabla')
         self.resize(1320, 900)
-        self.db = db
         self.setSizeGripEnabled(True)
+        # database
+        self.db = db
+
+        # Layouts
         self.v_layout = qtw.QVBoxLayout()
         self.h_layout = qtw.QHBoxLayout()
-        self.v_layout.addLayout(self.h_layout)
         self.setLayout(self.v_layout)
 
+        # Table model
         self.table = qtw.QTableView()
         self.model = CsvTableModel(self.db)
 
@@ -117,23 +120,45 @@ class Tabla(qtw.QDialog):
         self.table.setModel(self.filter_proxy_model)
         self.table.setSortingEnabled(True)
         self.table.setAlternatingRowColors(True)
-        self.layout().addWidget(self.table)
+
 
         self.filter_proxy_model.setSourceModel(self.model)
 
+        # filtros
         self.filtro = qtw.QComboBox()
         self.text_filtro = qtw.QLineEdit()
         self.filtro.addItems(self.model._headers)
         self.filtro.currentTextChanged.connect(self.cambiar_filtro)
         self.text_filtro.textChanged.connect(self.filter_proxy_model.setFilterRegExp)
 
+        # otros widgets
+        self.menubar = qtw.QMenuBar(objectName='menubar')
+        self.menu_archivo = qtw.QMenu('Archivo')
+        self.menu_editar = qtw.QMenu('Editar')
+        self.menu_archivo.addAction('Guardar archivo', self.guardar_cambios)
+        self.menu_archivo.addAction('Eliminar fila(s)', self.remove_rows)
+        self.menu_editar.addAction('Insertar arriba', self.insert_above)
+        self.menu_editar.addAction('Insertar abajo', self.insert_below)
+        self.menubar.addMenu(self.menu_archivo)
+        self.menubar.addMenu(self.menu_editar)
+
+        self.layout().addWidget(self.menubar)
+        self.v_layout.addLayout(self.h_layout)
+        self.layout().addWidget(self.table)
+
         self.h_layout.addWidget(self.filtro)
         self.h_layout.addWidget(self.text_filtro)
 
         #self.table.resizeColumnsToContents()
-
+        # style
         self.table.setStyleSheet('alternate-background-color: lightgray; background-color: white;'
                                  'font-size: 12pt;')
+        self.menubar.setStyleSheet('spacing: 3px; font-size: 10pt; color: #F3E5CE;')
+        self.menu_archivo.setStyleSheet('selection-background-color: #FF9B99; color: white; '
+                                        'font-size: 10pt;')
+        self.menu_editar.setStyleSheet('selection-background-color: #FF9B99; color: white; '
+                                        'font-size: 10pt;')
+
 
         if self.db.split('/')[-1] == 'productos.csv':
             self.table.resizeColumnsToContents()
@@ -143,6 +168,33 @@ class Tabla(qtw.QDialog):
     def cambiar_filtro(self):
         index = self.filtro.currentIndex()
         self.filter_proxy_model.setFilterKeyColumn(index)
+
+    def guardar_cambios(self):
+        if self.model:
+            self.model.save_data()
+            # self.statusBar().showMessage('Archivo guardado correctamente', 1000)
+
+    def insert_above(self):
+        try:
+            selected = self.table.selectedIndexes()
+            row = selected[0].row() if selected else 0
+            self.model.insertRows(row, 1, None)
+        except Exception as e:
+            pass
+
+    def insert_below(self):
+        try:
+            selected = self.table.selectedIndexes()
+            row = selected[-1].row() if selected else self.model.rowCount(None)
+            self.model.insertRows(row + 1, 1, None)
+        except Exception as e:
+            pass
+
+    def remove_rows(self):
+        selected = self.table.selectedIndexes()
+        num_rows = len(set(index.row() for index in selected))
+        if selected:
+            self.model.removeRows(selected[0].row(), num_rows, None)
 
 class MainWindow(qtw.QWidget):
 
