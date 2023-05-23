@@ -131,18 +131,26 @@ class Tabla(qtw.QDialog):
         self.filtro.currentTextChanged.connect(self.cambiar_filtro)
         self.text_filtro.textChanged.connect(self.filter_proxy_model.setFilterRegExp)
 
+        # Acciones
+        self.eliminar_filas = qtw.QAction('Eliminar fila(s)', self)
+        self.eliminar_filas.setShortcut('Del')
+        self.eliminar_filas.triggered.connect(self.remove_rows)
+
         # otros widgets
         self.menubar = qtw.QMenuBar(objectName='menubar')
         self.menu_archivo = qtw.QMenu('Archivo')
         self.menu_editar = qtw.QMenu('Editar')
+
         self.menu_archivo.addAction('Guardar archivo', self.guardar_cambios)
-        self.menu_archivo.addAction('Eliminar fila(s)', self.remove_rows)
+        #self.menu_archivo.addAction('Eliminar fila(s)', self.remove_rows)
+        self.menu_archivo.addAction(self.eliminar_filas)
         self.menu_editar.addAction('Insertar arriba', self.insert_above)
         self.menu_editar.addAction('Insertar abajo', self.insert_below)
         self.menubar.addMenu(self.menu_archivo)
         self.menubar.addMenu(self.menu_editar)
 
         self.layout().addWidget(self.menubar)
+        self.layout().addWidget(qtw.QLabel('Filtrar por:'))
         self.v_layout.addLayout(self.h_layout)
         self.layout().addWidget(self.table)
 
@@ -151,8 +159,8 @@ class Tabla(qtw.QDialog):
 
         #self.table.resizeColumnsToContents()
         # style
-        self.table.setStyleSheet('alternate-background-color: lightgray; background-color: white;'
-                                 'font-size: 12pt;')
+        self.table.setStyleSheet('alternate-background-color: lightgray;  background-color: white;'
+                                 'font-size: 12pt; selection-background-color: #FF9B99; ')
         self.menubar.setStyleSheet('spacing: 3px; font-size: 10pt; color: #F3E5CE;')
         self.menu_archivo.setStyleSheet('selection-background-color: #FF9B99; color: white; '
                                         'font-size: 10pt;')
@@ -198,7 +206,7 @@ class Tabla(qtw.QDialog):
 
 class MainWindow(qtw.QWidget):
 
-    presupuesto = pd.read_csv('database/DB/presupuesto.csv', sep=',')
+    presupuesto = pd.read_csv('database/DB/presupuestos_limpio.csv', sep=',')
     productos = pd.read_csv('database/DB/productos.csv', sep=',')
 
     def __init__(self):
@@ -650,6 +658,7 @@ class MainWindow(qtw.QWidget):
         self.cantidad.textChanged.connect(self.display_total)
 
         # stylesheet
+
         self.completer_productos.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                        "selection-background-color: #FF9B99;"
                                                        "selection-color: solidblack;")
@@ -683,7 +692,6 @@ class MainWindow(qtw.QWidget):
                                                        "selection-color: solidblack;")
 
         # Show
-
         self.show()
 
     # Display
@@ -861,7 +869,7 @@ class MainWindow(qtw.QWidget):
 
     def abrir_tabla_presupuestos(self):
         try:
-            tabla = Tabla('database/DB/presupuesto.csv')
+            tabla = Tabla('database/DB/presupuestos_limpio.csv')
             tabla.exec_()
         except Exception as e:
             print(e)
