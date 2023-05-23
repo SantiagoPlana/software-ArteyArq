@@ -15,7 +15,7 @@ class MainWindow(qtw.QWidget):
         super().__init__()
 
         self.setWindowTitle('Arte & Arquitectura')
-
+        self.setWindowIcon(QIcon('png_aya.ico'))
         # self.showFullScreen()
 
         self.menu = qtw.QMenuBar(objectName='menu')
@@ -37,7 +37,7 @@ class MainWindow(qtw.QWidget):
         self.trabajos_año = qtw.QComboBox()
 
         self.cliente = qtw.QLineEdit()
-        self.motivo = qtw.QLineEdit()
+        self.motivo = qtw.QTextEdit()
         self.cantidad = qtw.QLineEdit('1')
         self.med_orig_cm_alto = qtw.QLineEdit()
         self.med_orig_cm_ancho = qtw.QLineEdit()
@@ -119,10 +119,15 @@ class MainWindow(qtw.QWidget):
         # Botones
         self.btn_borrar = qtw.QPushButton('Borrar',
                                           objectName='botonborrar')
-        self.btn_pdf = qtw.QPushButton('PDF',
-                                       objectName='botonpdf')
-        self.btn_eliminar_todo = qtw.QPushButton('Descartar presupuesto',
-                                                 objectName='borrartodo')
+        self.btn_pdf = qtw.QPushButton(objectName='botonpdf')
+        self.eliminar_presupuesto = qtw.QPushButton('')
+        self.trabajo_completo = qtw.QPushButton(objectName='botoncompletado')
+        completado_icon = QIcon('checkmark.ico')
+        eliminar_icon = QIcon('trash-icon.ico')
+        pdf_icon = QIcon('pdf.ico')
+        self.btn_pdf.setIcon(pdf_icon)
+        self.eliminar_presupuesto.setIcon(eliminar_icon)
+        self.trabajo_completo.setIcon(completado_icon)
 
         # Layout
         main_layout = qtw.QVBoxLayout()
@@ -152,7 +157,7 @@ class MainWindow(qtw.QWidget):
         self.grid2.addWidget(qtw.QLabel('Cliente'), 1, 1)
         self.grid2.addWidget(self.cliente, 1, 2, 1, 2)
         self.grid2.addWidget(qtw.QLabel('Motivo'), 2, 1)
-        self.grid2.addWidget(self.motivo, 2, 2, 1, 2)
+        self.grid2.addWidget(self.motivo, 2, 2, 2, 2)
         self.grid2.addWidget(qtw.QLabel('Cant.'), 1, 4)
         self.grid2.addWidget(self.cantidad, 2, 4, 1, 1)
 
@@ -239,6 +244,9 @@ class MainWindow(qtw.QWidget):
         self.grid2.addWidget(self.label_total2, 7, 10, 1, 2)
         self.grid2.addWidget(self.total, 9, 10, 2, 2)
         self.grid2.addWidget(self.btn_borrar, 11, 9, 2, 2)
+        self.grid2.addWidget(self.btn_pdf, 13, 8, 2, 1)
+        self.grid2.addWidget(self.eliminar_presupuesto, 13, 9, 2, 1)
+        self.grid2.addWidget(self.trabajo_completo, 13, 10, 2, 1)
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
         main_layout.addLayout(self.grid2)
 
@@ -430,10 +438,10 @@ class MainWindow(qtw.QWidget):
         self.btn_borrar.clicked.connect(self.borrar)
 
         # Medidas
-        self.med_orig_cm_ancho.textChanged.connect(self.calculo_medidas_opt)
-        self.med_orig_cm_alto.textChanged.connect(self.calculo_medidas_opt)
-        self.pp_cm.textChanged.connect(self.calculo_medidas_opt)
-        self.var.textChanged.connect(self.calculo_medidas_opt)
+        self.med_orig_cm_ancho.textChanged.connect(self.calculo_medidas)
+        self.med_orig_cm_alto.textChanged.connect(self.calculo_medidas)
+        self.pp_cm.textChanged.connect(self.calculo_medidas)
+        self.var.textChanged.connect(self.calculo_medidas)
 
         # Otros
         self.p_otro1.textChanged.connect(self.display_p_unitario)
@@ -446,16 +454,37 @@ class MainWindow(qtw.QWidget):
         self.cantidad.textChanged.connect(self.display_total)
 
         # stylesheet
-        self.completer_productos.popup().setStyleSheet("color: white; font-size: 13pt;")
-        self.completer_productos2.popup().setStyleSheet("color: white; font-size: 13pt;")
-        self.completer_productos3.popup().setStyleSheet("color: white; font-size: 13pt;")
-        self.completer_productos4.popup().setStyleSheet("color: white; font-size: 13pt;")
-        self.completer_productos5.popup().setStyleSheet("color: white; font-size: 13pt;")
-        self.completer_productos6.popup().setStyleSheet("color: white; font-size: 13pt;")
-        self.completer_productos7.popup().setStyleSheet("color: white; font-size: 13pt;")
-        self.completer_productos8.popup().setStyleSheet("color: white; font-size: 13pt;")
-        self.completer_clientes.popup().setStyleSheet("color: white; font-size: 13pt;")
-        self.completer_trabajos.popup().setStyleSheet("color: white; font-size: 13pt;")
+        self.completer_productos.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                       "selection-background-color: #FF9B99;"
+                                                       "selection-color: solidblack;")
+        self.completer_productos2.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                        "selection-background-color: #FF9B99;"
+                                                        "selection-color: solidblack;")
+        self.completer_productos3.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                        "selection-background-color: #FF9B99;"
+                                                        "selection-color: solidblack;"
+                                                        )
+        self.completer_productos4.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                        "selection-background-color: #FF9B99;"
+                                                        "selection-color: solidblack;")
+        self.completer_productos5.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                        "selection-background-color: #FF9B99;"
+                                                        "selection-color: solidblack;")
+        self.completer_productos6.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                        "selection-background-color: #FF9B99;"
+                                                        "selection-color: solidblack;")
+        self.completer_productos7.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                        "selection-background-color: #FF9B99;"
+                                                        "selection-color: solidblack;")
+        self.completer_productos8.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                        "selection-background-color: #FF9B99;"
+                                                        "selection-color: solidblack;")
+        self.completer_clientes.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                      "selection-background-color: #FF9B99;"
+                                                      "selection-color:solidblack;")
+        self.completer_trabajos.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                      "selection-background-color: #FF9B99;"
+                                                       "selection-color: solidblack;")
 
         # Show
         self.show()
@@ -522,28 +551,33 @@ class MainWindow(qtw.QWidget):
             item = self.grid2.itemAt(i).widget()
             if isinstance(item, qtw.QComboBox):
                 item.clearEditText()
-            elif isinstance(item, qtw.QLineEdit):
+            elif isinstance(item, qtw.QLineEdit) or isinstance(item, qtw.QTextEdit):
                 item.clear()
         self.med_final_cm_ancho.setText('0')
         self.med_final_cm_alto.setText('0')
+        self.cantidad.setText('1')
         self.display_total()
         #self.display_p_unitario()
 
     # Cálculos
 
     @qtc.pyqtSlot()
-    def calculo_medidas_opt(self):
+    def calculo_medidas(self):
         # medidas originales
-        ancho = self.med_orig_cm_ancho.text()
-        alto = self.med_orig_cm_alto.text()
-        pp = self.pp_cm.text()
-        var = self.var.text()
+        ancho = self.med_orig_cm_ancho.text().replace(',', '.')
+        alto = self.med_orig_cm_alto.text().replace(',', '.')
+        pp = self.pp_cm.text().replace(',', '.')
+        var = self.var.text().replace(',', '.')
         lst = [ancho, alto, pp, var]
         for txt in lst:
             if len(txt) == 0:
                 lst[lst.index(txt)] = 0
             else:
-                lst[lst.index(txt)] = float(txt)
+                try:
+                    lst[lst.index(txt)] = float(txt)
+                except Exception as e:
+                    lst[lst.index(txt)] = 0
+
         final_ancho = lst[0] + (lst[2] * 2) + (lst[3] * 2)
         final_alto = lst[1] + (lst[2] * 2) + (lst[3] * 2)
         sup_m2 = final_ancho / 100 * final_alto / 100
@@ -652,12 +686,19 @@ border-width:3px;
 border-color:ivory;
 font-size: 17pt;
 }
+QTextEdit {
+font-size: 13pt;
+border: 1px solid black;
+background-color: ivory;   
+selection-background-color: #FF9B99;
+selection-color: solidblack; 
+}
 QLineEdit {
     font-size: 13pt;
     border: 1px solid black;
     background-color: ivory;   
     selection-background-color: #FF9B99;
-    selection-color: white; 
+    selection-color: solidblack; 
 }
 QLineEdit:!enabled {
 background-color: #BCC8C8;
@@ -669,7 +710,7 @@ font-size: 13pt;
 background-color: ivory;
 color: black;
 selection-background-color: #FF9B99;
-selection-color: white;
+selection-color: solidblack;
 border-style: solid;
 border-radius: 5px;
 }
