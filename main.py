@@ -3,6 +3,118 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 from PyQt5.QtGui import QPixmap, QPainter, QDoubleValidator, QIcon
 import pandas as pd
+import csv
+
+class CsvTableModel(qtc.QAbstractTableModel):
+    """The model for a CSV table."""
+
+    def __init__(self, csv_file):
+        super().__init__()
+        self.filename = csv_file
+        with open(self.filename, encoding='utf-8') as fh:
+            csvreader = csv.reader(fh)
+            self._headers = next(csvreader)
+            self._data = list(csvreader)
+
+    # Minimum necessary methods:
+    def rowCount(self, parent):
+        return len(self._data)
+
+    def columnCount(self, parent):
+        return len(self._headers)
+
+    def data(self, index, role):
+        # Add EditRole so that the cell is not cleared when editing
+        if role in (qtc.Qt.DisplayRole, qtc.Qt.EditRole):
+            return self._data[index.row()][index.column()]
+
+    # Additional features methods:
+
+    def headerData(self, section, orientation, role):
+
+        if orientation == qtc.Qt.Horizontal and role == qtc.Qt.DisplayRole:
+            return self._headers[section]
+        else:
+            return super().headerData(section, orientation, role)
+
+    def sort(self, column, order):
+        self.layoutAboutToBeChanged.emit()  # needs to be emitted before a sort
+        self._data.sort(key=lambda x: x[column])
+        if order == qtc.Qt.DescendingOrder:
+            self._data.reverse()
+        self.layoutChanged.emit()  # needs to be emitted after a sort
+
+    # Methods for Read/Write
+
+    def flags(self, index):
+        return super().flags(index) | qtc.Qt.ItemIsEditable
+
+    def setData(self, index, value, role):
+        if index.isValid() and role == qtc.Qt.EditRole:
+            if not value:
+                return False
+            self._data[index.row()][index.column()] = value.encode('latin-1')
+            self.dataChanged.emit(index, index, [role])
+            return True
+        else:
+            return False
+
+    # Methods for inserting or deleting
+
+    def insertRows(self, position, rows, parent):
+        self.beginInsertRows(
+            parent or qtc.QModelIndex(),
+            position,
+            position + rows - 1
+        )
+
+        for i in range(rows):
+            default_row = [''] * len(self._headers)
+            self._data.insert(position, default_row)
+        self.endInsertRows()
+
+    def removeRows(self, position, rows, parent):
+        self.beginRemoveRows(
+            parent or qtc.QModelIndex(),
+            position,
+            position + rows - 1
+        )
+        for i in range(rows):
+            del (self._data[position])
+        self.endRemoveRows()
+
+    # method for saving
+    def save_data(self):
+        # commented out code below to fix issue with additional lines being added after saving csv file from the window.
+        # with open(self.filename, 'w', encoding='utf-8') as fh:
+        with open(self.filename, 'w', newline='', encoding='utf-8') as fh:
+            writer = csv.writer(fh)
+            writer.writerow(self._headers)
+            writer.writerows(self._data)
+
+
+class Tabla(qtw.QDialog):
+
+    def __init__(self, db):
+        super().__init__()
+
+        print('yo ')
+        self.setWindowTitle('Tabla')
+        self.resize(1320, 900)
+        self.db = db
+        self.setSizeGripEnabled(True)
+        self.v_layout = qtw.QVBoxLayout()
+        self.setLayout(self.v_layout)
+
+        self.table = qtw.QTableView()
+        self.model = CsvTableModel(self.db)
+        self.table.setModel(self.model)
+        self.table.setSortingEnabled(True)
+        self.table.setAlternatingRowColors(True)
+        self.layout().addWidget(self.table)
+
+
+        # self.table.resizeColumnsToContents()
 
 
 class MainWindow(qtw.QWidget):
@@ -18,9 +130,13 @@ class MainWindow(qtw.QWidget):
         self.setWindowIcon(QIcon('png_aya.ico'))
         # self.showFullScreen()
 
+        self.center()
+
         self.menu = qtw.QMenuBar(objectName='menu')
-        self.menu.addAction('Abrir tabla productos')
-        self.menu.addAction('Abrir tabla de presupuestos')
+        self.menu.addAction('Guardar cambios')
+        self.menu.addAction('Abrir tabla productos', self.abrir_tabla_productos)
+        self.menu.addAction('Abrir tabla de presupuestos', self.abrir_tabla_presupuestos)
+
 
         self.title = qtw.QLabel('Presupuesto', objectName='titulo')
         self.title.setAlignment(qtc.Qt.AlignTop)
@@ -243,10 +359,11 @@ class MainWindow(qtw.QWidget):
         self.grid2.addWidget(self.punit, 9, 8, 2, 2)
         self.grid2.addWidget(self.label_total2, 7, 10, 1, 2)
         self.grid2.addWidget(self.total, 9, 10, 2, 2)
-        self.grid2.addWidget(self.btn_borrar, 11, 9, 2, 2)
+        self.grid2.addWidget(self.btn_borrar, 11, 9, 2, 1)
         self.grid2.addWidget(self.btn_pdf, 13, 8, 2, 1)
         self.grid2.addWidget(self.eliminar_presupuesto, 13, 9, 2, 1)
         self.grid2.addWidget(self.trabajo_completo, 13, 10, 2, 1)
+
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
         main_layout.addLayout(self.grid2)
 
@@ -487,7 +604,15 @@ class MainWindow(qtw.QWidget):
                                                        "selection-color: solidblack;")
 
         # Show
+
         self.show()
+
+    # Display
+    def center(self):
+        geometry = self.frameGeometry()
+        dsktp_geo = qtw.QDesktopWidget().availableGeometry().center()
+        geometry.moveCenter(dsktp_geo)
+        self.move(geometry.topLeft())
 
     # Methods
     # Form methods
@@ -655,6 +780,16 @@ class MainWindow(qtw.QWidget):
         total = '%.2f' % total
         self.punit.setText(str(total))
 
+    def abrir_tabla_presupuestos(self):
+        try:
+            tabla = Tabla('database/DB/presupuesto.csv')
+            tabla.exec_()
+        except Exception as e:
+            print(e)
+
+    def abrir_tabla_productos(self):
+        tabla = Tabla('database/DB/productos.csv')
+        tabla.exec_()
 
 stylesheet = '''
 #titulo {
