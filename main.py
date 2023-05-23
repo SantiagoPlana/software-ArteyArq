@@ -98,24 +98,51 @@ class Tabla(qtw.QDialog):
     def __init__(self, db):
         super().__init__()
 
-        print('yo ')
         self.setWindowTitle('Tabla')
         self.resize(1320, 900)
         self.db = db
         self.setSizeGripEnabled(True)
         self.v_layout = qtw.QVBoxLayout()
+        self.h_layout = qtw.QHBoxLayout()
+        self.v_layout.addLayout(self.h_layout)
         self.setLayout(self.v_layout)
 
         self.table = qtw.QTableView()
         self.model = CsvTableModel(self.db)
-        self.table.setModel(self.model)
+
+        self.filter_proxy_model = qtc.QSortFilterProxyModel()
+        self.filter_proxy_model.setFilterCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.filter_proxy_model.setFilterKeyColumn(0)
+
+        self.table.setModel(self.filter_proxy_model)
         self.table.setSortingEnabled(True)
         self.table.setAlternatingRowColors(True)
         self.layout().addWidget(self.table)
 
+        self.filter_proxy_model.setSourceModel(self.model)
 
-        # self.table.resizeColumnsToContents()
+        self.filtro = qtw.QComboBox()
+        self.text_filtro = qtw.QLineEdit()
+        self.filtro.addItems(self.model._headers)
+        self.filtro.currentTextChanged.connect(self.cambiar_filtro)
+        self.text_filtro.textChanged.connect(self.filter_proxy_model.setFilterRegExp)
 
+        self.h_layout.addWidget(self.filtro)
+        self.h_layout.addWidget(self.text_filtro)
+
+        #self.table.resizeColumnsToContents()
+
+        self.table.setStyleSheet('alternate-background-color: lightgray; background-color: white;'
+                                 'font-size: 12pt;')
+
+        if self.db.split('/')[-1] == 'productos.csv':
+            self.table.resizeColumnsToContents()
+
+
+    @qtc.pyqtSlot()
+    def cambiar_filtro(self):
+        index = self.filtro.currentIndex()
+        self.filter_proxy_model.setFilterKeyColumn(index)
 
 class MainWindow(qtw.QWidget):
 
