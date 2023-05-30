@@ -4,6 +4,10 @@ from PyQt5 import QtCore as qtc
 from PyQt5.QtGui import QPixmap, QPainter, QDoubleValidator, QIcon
 import pandas as pd
 import csv
+import time
+
+start = time.time()
+
 
 class CsvTableModel(qtc.QAbstractTableModel):
     """The model for a CSV table."""
@@ -204,15 +208,19 @@ class Tabla(qtw.QDialog):
         if selected:
             self.model.removeRows(selected[0].row(), num_rows, None)
 
+
 class MainWindow(qtw.QWidget):
 
+    start = time.time()
     presupuesto = pd.read_csv('database/DB/presupuestos_limpio.csv', sep=',')
     productos = pd.read_csv('database/DB/productos.csv', sep=',')
+    end = time.time()
+    print(end - start)
 
     def __init__(self):
 
         super().__init__()
-
+        start = time.time()
         self.setWindowTitle('Arte & Arquitectura')
         self.setWindowIcon(QIcon('png_aya.ico'))
         # self.showFullScreen()
@@ -353,7 +361,7 @@ class MainWindow(qtw.QWidget):
         self.grid1.addWidget(self.clientes_combo, 3, 2)
         self.grid1.addWidget(qtw.QLabel('Trabajos (todos)'), 2, 3)
         self.grid1.addWidget(self.trabajos_todos, 2, 4)
-        self.grid1.addWidget(qtw.QLabel('Trabajos (por año)'), 3, 3)
+        self.grid1.addWidget(qtw.QLabel('Trabajos (este año)'), 3, 3)
         self.grid1.addWidget(self.trabajos_año, 3, 4)
 
         # main_layout.addLayout(qtw.QSpacerItem(1, 1), 4, 1, 1, 6)
@@ -453,9 +461,12 @@ class MainWindow(qtw.QWidget):
 
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
         main_layout.addLayout(self.grid2)
-
+        end = time.time()
+        total = end - start
+        print(f'Widgets and layout: {total}')
         #### Combo-boxes ####
         ### Clientes
+        start1 = time.time()
 
         self.completer_trabajos = qtw.QCompleter(
             self.presupuesto.loc[:, 'Motivo'], self
@@ -470,16 +481,23 @@ class MainWindow(qtw.QWidget):
 
         self.clientes_combo.addItem('')
         self.clientes_combo.addItems(
-            sorted(self.presupuesto.loc[:, 'Cliente'].unique()))
+            sorted(self.presupuesto.loc[:, 'Cliente']))
         self.trabajos_todos.addItem('')
         self.trabajos_todos.addItems(
-            sorted(self.presupuesto.loc[:, 'Motivo'].unique())
+            sorted(self.presupuesto.loc[:, 'Motivo'])
         )
         self.trabajos_todos.setEditable(True)
         self.clientes_combo.setEditable(True)
         self.trabajos_todos.setCompleter(self.completer_trabajos)
         self.clientes_combo.setCompleter(self.completer_clientes)
 
+        # Trabajos este año
+        self.year = qtc.QDateTime().currentDateTime().date().year()
+        year_subset = self.presupuesto['F_Realizacion'].apply(
+            lambda x: x.split('/')[-1]
+        )
+        year_subset = [year for year in year_subset if year == self.year]
+        self.trabajos_año.addItems(year_subset)
 
         # Productos
         self.combo1.addItem('')
@@ -561,6 +579,9 @@ class MainWindow(qtw.QWidget):
         self.combo7.setCompleter(self.completer_productos7)
         self.combo8.setCompleter(self.completer_productos8)
 
+        end1 = time.time()
+        total1 = end1 - start1
+        print(f'Combo-box lists and completers: {total1}')
         # Validators
         self.validator = QDoubleValidator()
         self.med_orig_cm_ancho.setValidator(self.validator)
@@ -657,6 +678,11 @@ class MainWindow(qtw.QWidget):
 
         self.cantidad.textChanged.connect(self.display_total)
 
+        # Motivo
+        self.trabajos_todos.activated.connect(lambda: self.complete_from_work(
+            string=self.trabajos_todos.currentText()
+        ))
+
         # stylesheet
 
         self.completer_productos.popup().setStyleSheet("color: white; font-size: 13pt;"
@@ -750,8 +776,21 @@ class MainWindow(qtw.QWidget):
                 item = self.grid2.itemAtPosition(row, 0).widget()
 
     # !Pendiente
-    def complete_from_work(self):
-        pass
+    def complete_from_work(self, string):
+        subset = self.presupuesto[
+            self.presupuesto['Motivo'] == string
+        ]
+        self.fecha_rec.setText(subset['F_Recepción'].values[0])
+        self.fecha_entrega.setText(subset['F_Entrega'].values[0])
+        self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
+        self.cliente.setText(subset['Cliente'].values[0])
+        self.motivo.setText(subset['Motivo'].values[0])
+        self.cantidad.setText(str(int(subset['Cant'].values[0])))
+        self.med_orig_cm_ancho.setText(str(subset['cto1'].values[0]))
+        self.med_orig_cm_alto.setText(str(subset['cto2'].values[0]))
+        self.var.setText(str(subset['ctvar'].values[0]))
+        self.pp_cm.setText(str(subset['ctpp'].values[0]))
+        self.total.setText(str(subset['Total_General'].values[0]))
 
     @qtc.pyqtSlot()
     def borrar(self):
@@ -960,4 +999,7 @@ if __name__ == '__main__':
     # it's required to save a reference to MainWindow.
     # if it goes out of scope, it will be destroyed.
     mw = MainWindow()
+    end = time.time()
+    total = end - start
+    print(f'Total: {total}')
     sys.exit(app.exec())
