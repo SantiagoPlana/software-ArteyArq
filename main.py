@@ -57,7 +57,7 @@ class CsvTableModel(qtc.QAbstractTableModel):
         if index.isValid() and role == qtc.Qt.EditRole:
             if not value:
                 return False
-            self._data[index.row()][index.column()] = value.encode('latin-1')
+            self._data[index.row()][index.column()] = value
             self.dataChanged.emit(index, index, [role])
             return True
         else:
@@ -716,6 +716,7 @@ class MainWindow(qtw.QWidget):
         self.completer_trabajos.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                       "selection-background-color: #FF9B99;"
                                                        "selection-color: solidblack;")
+
 
         # Show
         self.show()
