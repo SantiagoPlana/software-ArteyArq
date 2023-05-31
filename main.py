@@ -105,6 +105,7 @@ class Tabla(qtw.QDialog):
         self.setWindowTitle('Tabla')
         self.resize(1320, 900)
         self.setSizeGripEnabled(True)
+        self.setModal(False)
         # database
         self.db = db
 
@@ -145,6 +146,7 @@ class Tabla(qtw.QDialog):
         self.menu_archivo = qtw.QMenu('Archivo')
         self.menu_editar = qtw.QMenu('Editar')
 
+
         self.menu_archivo.addAction('Guardar archivo', self.guardar_cambios)
         #self.menu_archivo.addAction('Eliminar fila(s)', self.remove_rows)
         self.menu_archivo.addAction(self.eliminar_filas)
@@ -152,6 +154,7 @@ class Tabla(qtw.QDialog):
         self.menu_editar.addAction('Insertar abajo', self.insert_below)
         self.menubar.addMenu(self.menu_archivo)
         self.menubar.addMenu(self.menu_editar)
+        self.menubar.addAction('Aplicar porcentaje', self.sumar_porcentaje_dialog)
 
         self.layout().addWidget(self.menubar)
         self.layout().addWidget(qtw.QLabel('Filtrar por:'))
@@ -207,6 +210,44 @@ class Tabla(qtw.QDialog):
         num_rows = len(set(index.row() for index in selected))
         if selected:
             self.model.removeRows(selected[0].row(), num_rows, None)
+
+    def sumar_porcentaje_dialog(self):
+        """Input dialog para ingresar porcentaje"""
+
+        user_input = qtw.QInputDialog()
+        porcentaje, ok = user_input.getDouble(self,
+                                              'Porcentaje',
+                                              'Porcentaje: ',
+                                              qtw.QLineEdit.Normal,
+                                              0, 100)
+        if porcentaje and ok:
+            self.sumar_porcentaje(porcentaje)
+
+    def sumar_porcentaje(self, porcentaje):
+        idxs = self.table.selectedIndexes()
+        if idxs:
+            msg = qtw.QMessageBox()
+            msg.setText(f'¿Está seguro de que desea modificar {len(idxs)} elementos?')
+            msg.setWindowTitle(' ')
+            msg.exec_()
+            if msg.sender():
+                # print('Accepted')
+                try:
+                    porcentaje = porcentaje / 100
+                    for idx in idxs:
+                        # Map to source hace que todo funcione bien con la tabla filtrada.
+                        row = self.filter_proxy_model.mapToSource(idx).row()
+                        col = self.filter_proxy_model.mapToSource(idx).column()
+                        idx = round(float(idx.data()))
+                        # print(row, col, idx)
+                        nuevo_precio = idx + (idx * porcentaje)
+                        # print(nuevo_precio)
+                        self.model._data[row][col] = nuevo_precio
+                        # self.statusBar().showMessage('Valores modificados correctamente.', 10000)
+                except Exception as e:
+                    msg = 'Seleccione únicamente celdas que contengan números.'
+                    self.display_msg(msg, icon=qtw.QMessageBox.Critical,
+                                     informativeText=e, windowTitle='Datos erróneos')
 
 
 class MainWindow(qtw.QWidget):
