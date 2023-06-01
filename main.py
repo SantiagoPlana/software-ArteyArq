@@ -154,7 +154,6 @@ class Tabla(qtw.QDialog):
         self.menu_editar.addAction('Insertar abajo', self.insert_below)
         self.menubar.addMenu(self.menu_archivo)
         self.menubar.addMenu(self.menu_editar)
-        self.menubar.addAction('Aplicar porcentaje', self.sumar_porcentaje_dialog)
 
         self.layout().addWidget(self.menubar)
         self.layout().addWidget(qtw.QLabel('Filtrar por:'))
@@ -176,6 +175,8 @@ class Tabla(qtw.QDialog):
 
 
         if self.db.split('/')[-1] == 'productos.csv':
+            self.menubar.addAction('Agregar porcentaje', self.sumar_porcentaje_dialog)
+            self.menubar.addAction('Restar porcentaje', self.descontar_porcentaje_dialog)
             self.table.resizeColumnsToContents()
 
 
@@ -215,6 +216,7 @@ class Tabla(qtw.QDialog):
         """Input dialog para ingresar porcentaje"""
 
         user_input = qtw.QInputDialog()
+
         porcentaje, ok = user_input.getDouble(self,
                                               'Porcentaje',
                                               'Porcentaje: ',
@@ -222,6 +224,43 @@ class Tabla(qtw.QDialog):
                                               0, 100)
         if porcentaje and ok:
             self.sumar_porcentaje(porcentaje)
+
+    def descontar_porcentaje_dialog(self):
+        """Input dialog para ingresar porcentaje"""
+
+        user_input = qtw.QInputDialog()
+
+        porcentaje, ok = user_input.getDouble(self,
+                                              'Porcentaje',
+                                              'Porcentaje: ',
+                                              qtw.QLineEdit.Normal,
+                                              0, 100)
+        if porcentaje and ok:
+            self.descontar_porcentaje(porcentaje)
+
+    def descontar_porcentaje(self, porcentaje):
+        idxs = self.table.selectedIndexes()
+        porcentaje = porcentaje / 100
+        if idxs:
+            msg = qtw.QMessageBox()
+            msg.setText(f'¿Está seguro de que desea modificar {len(idxs)} elementos?')
+            msg.setWindowTitle(' ')
+            msg.exec_()
+            if msg.sender():
+                # print('Accepted')
+                for idx in idxs:
+                    try:
+                        row = self.filter_proxy_model.mapToSource(idx).row()
+                        col = self.filter_proxy_model.mapToSource(idx).column()
+                        idx = round(float(idx.data()))
+                        nuevo_precio = idx - (idx * porcentaje)
+                        self.model._data[row][col] = nuevo_precio
+                        # self.statusBar().showMessage('Valores modificados correctamente.', 10000)
+                    except Exception as e:
+                        msg = 'Seleccione únicamente celdas que contengan números.'
+                        self.display_msg(msg, icon=qtw.QMessageBox.Critical,
+                                         informativeText=f'Elemento: {idx.data()}',
+                                         windowTitle='Error')
 
     def sumar_porcentaje(self, porcentaje):
         idxs = self.table.selectedIndexes()
@@ -284,7 +323,7 @@ class MainWindow(qtw.QWidget):
         self.center()
 
         self.menu = qtw.QMenuBar(objectName='menu')
-        self.menu.addAction('Guardar cambios')
+        # self.menu.addAction('Guardar cambios')
         self.menu.addAction('Abrir tabla productos', self.abrir_tabla_productos)
         self.menu.addAction('Abrir tabla de presupuestos', self.abrir_tabla_presupuestos)
 
@@ -411,10 +450,10 @@ class MainWindow(qtw.QWidget):
         self.grid1.addWidget(self.image, 0, 3, 1, 2)
 
         self.grid1.addItem(qtw.QSpacerItem(10, 20), 1, 0)
-        self.grid1.addWidget(qtw.QLabel('Presupuestos pendientes'), 2, 1)
-        self.grid1.addWidget(self.presupuestos_pendientes, 2, 2)
-        self.grid1.addWidget(qtw.QLabel('Clientes'), 3, 1)
-        self.grid1.addWidget(self.clientes_combo, 3, 2)
+        self.grid1.addWidget(qtw.QLabel('Presupuestos pendientes'), 2, 0)
+        self.grid1.addWidget(self.presupuestos_pendientes, 2, 1)
+        self.grid1.addWidget(qtw.QLabel('Clientes'), 3, 0)
+        self.grid1.addWidget(self.clientes_combo, 3, 1)
         self.grid1.addWidget(qtw.QLabel('Trabajos (todos)'), 2, 3)
         self.grid1.addWidget(self.trabajos_todos, 2, 4)
         self.grid1.addWidget(qtw.QLabel('Trabajos (este año)'), 3, 3)
@@ -517,6 +556,7 @@ class MainWindow(qtw.QWidget):
 
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
         main_layout.addLayout(self.grid2)
+        main_layout.addSpacerItem(qtw.QSpacerItem(10, 50))
         end = time.time()
         total = end - start
         print(f'Widgets and layout: {total}')
@@ -848,6 +888,7 @@ class MainWindow(qtw.QWidget):
         self.var.setText(str(subset['ctvar'].values[0]))
         self.pp_cm.setText(str(subset['ctpp'].values[0]))
         self.total.setText(str(subset['Total_General'].values[0]))
+        self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
 
     @qtc.pyqtSlot()
     def borrar(self):
