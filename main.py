@@ -225,6 +225,7 @@ class Tabla(qtw.QDialog):
 
     def sumar_porcentaje(self, porcentaje):
         idxs = self.table.selectedIndexes()
+        porcentaje = porcentaje / 100
         if idxs:
             msg = qtw.QMessageBox()
             msg.setText(f'¿Está seguro de que desea modificar {len(idxs)} elementos?')
@@ -232,9 +233,8 @@ class Tabla(qtw.QDialog):
             msg.exec_()
             if msg.sender():
                 # print('Accepted')
-                try:
-                    porcentaje = porcentaje / 100
-                    for idx in idxs:
+                for idx in idxs:
+                    try:
                         # Map to source hace que todo funcione bien con la tabla filtrada.
                         row = self.filter_proxy_model.mapToSource(idx).row()
                         col = self.filter_proxy_model.mapToSource(idx).column()
@@ -244,10 +244,25 @@ class Tabla(qtw.QDialog):
                         # print(nuevo_precio)
                         self.model._data[row][col] = nuevo_precio
                         # self.statusBar().showMessage('Valores modificados correctamente.', 10000)
-                except Exception as e:
-                    msg = 'Seleccione únicamente celdas que contengan números.'
-                    self.display_msg(msg, icon=qtw.QMessageBox.Critical,
-                                     informativeText=e, windowTitle='Datos erróneos')
+                    except Exception as e:
+                        msg = 'Seleccione únicamente celdas que contengan números.'
+                        self.display_msg(msg, icon=qtw.QMessageBox.Critical,
+                                         informativeText=f'Elemento: {idx.data()}',
+                                         windowTitle='Error')
+
+    def display_msg(self, string, **kwargs):
+        msg = qtw.QMessageBox()
+        msg.setWindowIcon(QIcon('png_aya.ico'))
+        msg.setText(string)
+        for k, v in kwargs.items():
+            setattr(msg, k, v)
+        try:
+            msg.setInformativeText(str(kwargs.get('informativeText', ' ')))
+            msg.setIcon(kwargs.get('icon', None))
+            msg.setWindowTitle(str(kwargs.get('windowTitle', ' ')))
+        except Exception as e:
+            print(e)
+        msg.exec_()
 
 
 class MainWindow(qtw.QWidget):
