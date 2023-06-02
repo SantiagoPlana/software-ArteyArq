@@ -877,6 +877,7 @@ class MainWindow(qtw.QWidget):
 
     # !Pendiente
     def complete_from_work(self, string):
+        self.borrar()
         subset = self.presupuesto[
             self.presupuesto['Motivo'] == string
         ]
@@ -892,6 +893,37 @@ class MainWindow(qtw.QWidget):
         self.pp_cm.setText(str(subset['ctpp'].values[0]))
         self.total.setText(str(subset['Total_General'].values[0]))
         self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
+
+        self.completar_precios(subset)
+        self.completar_productos_from_work(subset)
+    
+    def completar_productos_from_work(self, subset):
+        productos = [col for col in subset.columns if col.startswith('CC')]
+        # precios = [col for col in subset.columns if col.startswith('ctpreciouni')]
+        # num_of_products = len(productos)
+        item_row = 8
+        for col in productos:
+            producto_id = int(subset.loc[:, col].values[0])
+            if producto_id != 0:
+                item = self.productos[
+                    self.productos['Contador'] == producto_id]['DenominaciónCompleta'].values[0]
+                # print(item)
+                self.grid2.itemAtPosition(item_row, 1).widget().setCurrentText(item)
+                item_row += 1
+
+    def completar_precios(self, subset):
+        """Esta función completa con los precios con los que se fijaron presupuestos pasados"""
+        try:
+            precios = [col for col in subset.columns if col.startswith('ctpreciouni')]
+            item_row = 8
+            for col in precios:
+                precio = subset.loc[:, col].values[0]
+                if precio != 0:
+                    self.grid2.itemAtPosition(item_row, 6).widget().setText(str(precio))
+                    item_row += 1
+                # print('Done', item_row, precio)
+        except Exception as e:
+            print(e)
 
     @qtc.pyqtSlot()
     def borrar(self):
