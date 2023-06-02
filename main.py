@@ -209,8 +209,11 @@ class Tabla(qtw.QDialog):
     def remove_rows(self):
         selected = self.table.selectedIndexes()
         num_rows = len(set(index.row() for index in selected))
+        selected_proxy = [self.filter_proxy_model.mapToSource(idx) for idx in selected]
+        print(selected_proxy)
         if selected:
-            self.model.removeRows(selected[0].row(), num_rows, None)
+            for row in range(num_rows):
+                self.model.removeRows(selected_proxy[row].row(), num_rows, None)
 
     def sumar_porcentaje_dialog(self):
         """Input dialog para ingresar porcentaje"""
@@ -1014,6 +1017,7 @@ class MainWindow(qtw.QWidget):
     def abrir_tabla_productos(self):
         tabla = Tabla('database/DB/productos.csv')
         tabla.exec_()
+
 
 stylesheet = '''
 #titulo {
