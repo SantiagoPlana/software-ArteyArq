@@ -350,35 +350,35 @@ class MainWindow(qtw.QWidget):
         self.trabajos_todos = qtw.QComboBox()
         self.trabajos_año = qtw.QComboBox()
 
-        self.cliente = qtw.QLineEdit()
-        self.motivo = qtw.QTextEdit()
-        self.cantidad = qtw.QLineEdit('1')
-        self.med_orig_cm_alto = qtw.QLineEdit()
-        self.med_orig_cm_ancho = qtw.QLineEdit()
-        self.med_final_cm_alto = qtw.QLineEdit()
-        self.med_final_cm_ancho = qtw.QLineEdit()
+        self.cliente = qtw.QLineEdit(objectName='cliente')
+        self.motivo = qtw.QTextEdit(objectName='motivo')
+        self.cantidad = qtw.QLineEdit('1', objectName='cantidad')
+        self.med_orig_cm_alto = qtw.QLineEdit(objectName='alto_original')
+        self.med_orig_cm_ancho = qtw.QLineEdit(objectName='ancho_original')
+        self.med_final_cm_alto = qtw.QLineEdit(objectName='alto_final')
+        self.med_final_cm_ancho = qtw.QLineEdit(objectName='ancho_final')
         self.med_final_cm_ancho.setText('0')
         self.med_final_cm_alto.setText('0')
-        self.pp_cm = qtw.QLineEdit()
-        self.var = qtw.QLineEdit()
+        self.pp_cm = qtw.QLineEdit(objectName='pp')
+        self.var = qtw.QLineEdit(objectName='var')
         self.sup_m2 = qtw.QLineEdit()
         self.per_ml = qtw.QLineEdit()
 
-        self.fecha_rec = qtw.QLineEdit()
-        self.fecha_entrega = qtw.QLineEdit()
-        self.fecha_realizacion = qtw.QLineEdit()
+        self.fecha_rec = qtw.QLineEdit(objectName='fecha_recepción')
+        self.fecha_entrega = qtw.QLineEdit(objectName='fecha_entrega')
+        self.fecha_realizacion = qtw.QLineEdit(objectName='fecha_realización')
 
         #### Detalle ####
         # Col 1
         self.label_nombre = qtw.QLabel('Nombre del producto')
-        self.combo1 = qtw.QComboBox()
-        self.combo2 = qtw.QComboBox()
-        self.combo3 = qtw.QComboBox()
-        self.combo4 = qtw.QComboBox()
-        self.combo5 = qtw.QComboBox()
-        self.combo6 = qtw.QComboBox()
-        self.combo7 = qtw.QComboBox()
-        self.combo8 = qtw.QComboBox()
+        self.combo1 = qtw.QComboBox(objectName='item1')
+        self.combo2 = qtw.QComboBox(objectName='item2')
+        self.combo3 = qtw.QComboBox(objectName='item3')
+        self.combo4 = qtw.QComboBox(objectName='item4')
+        self.combo5 = qtw.QComboBox(objectName='item5')
+        self.combo6 = qtw.QComboBox(objectName='item6')
+        self.combo7 = qtw.QComboBox(objectName='item7')
+        self.combo8 = qtw.QComboBox(objectName='item8')
 
         # Col 2
         self.label_stock = qtw.QLabel('Stock')
@@ -404,14 +404,14 @@ class MainWindow(qtw.QWidget):
 
         # Col 4
         self.label_total = qtw.QLabel('Total')
-        self.total1 = qtw.QLineEdit()
-        self.total2 = qtw.QLineEdit()
-        self.total3 = qtw.QLineEdit()
-        self.total4 = qtw.QLineEdit()
-        self.total5 = qtw.QLineEdit()
-        self.total6 = qtw.QLineEdit()
-        self.total7 = qtw.QLineEdit()
-        self.total8 = qtw.QLineEdit()
+        self.total1 = qtw.QLineEdit(objectName='total1')
+        self.total2 = qtw.QLineEdit(objectName='total2')
+        self.total3 = qtw.QLineEdit(objectName='total3')
+        self.total4 = qtw.QLineEdit(objectName='total4')
+        self.total5 = qtw.QLineEdit(objectName='total5')
+        self.total6 = qtw.QLineEdit(objectName='total6')
+        self.total7 = qtw.QLineEdit(objectName='total7')
+        self.total8 = qtw.QLineEdit(objectName='total8')
 
         # Totales
         self.label_p_unitario2 = qtw.QLabel('P. Unitario',
@@ -422,13 +422,13 @@ class MainWindow(qtw.QWidget):
         self.total = qtw.QLabel('0.00', objectName='preciototal')
 
         # Otros
-        self.otro1 = qtw.QLineEdit()
-        self.otro2 = qtw.QLineEdit()
-        self.otro3 = qtw.QLineEdit()
+        self.otro1 = qtw.QLineEdit(objectName='otro1')
+        self.otro2 = qtw.QLineEdit(objectName='otro2')
+        self.otro3 = qtw.QLineEdit(objectName='otro3')
 
-        self.p_otro1 = qtw.QLineEdit()
-        self.p_otro2 = qtw.QLineEdit()
-        self.p_otro3 = qtw.QLineEdit()
+        self.p_otro1 = qtw.QLineEdit(objectName='p_otro1')
+        self.p_otro2 = qtw.QLineEdit(objectName='p_otro2')
+        self.p_otro3 = qtw.QLineEdit(objectName='p_otro3')
 
         # Botones
         self.btn_borrar = qtw.QPushButton('Borrar',
@@ -766,6 +766,9 @@ class MainWindow(qtw.QWidget):
         # Borrar
         self.btn_borrar.clicked.connect(self.borrar)
 
+        # Confirmar trabajo
+        self.btn_pdf.clicked.connect(self.checker)
+
         # Medidas
         self.med_orig_cm_ancho.textChanged.connect(self.calculo_medidas)
         self.med_orig_cm_alto.textChanged.connect(self.calculo_medidas)
@@ -836,6 +839,20 @@ class MainWindow(qtw.QWidget):
         dsktp_geo = qtw.QDesktopWidget().availableGeometry().center()
         geometry.moveCenter(dsktp_geo)
         self.move(geometry.topLeft())
+
+    def message(self, string, **kwargs):
+        msg = qtw.QMessageBox()
+        msg.setWindowIcon(QIcon('png_aya.ico'))
+        msg.setText(string)
+        for k, v in kwargs.items():
+            setattr(msg, k, v)
+        try:
+            msg.setInformativeText(str(kwargs.get('informativeText', ' ')))
+            msg.setIcon(kwargs.get('icon', None))
+            msg.setWindowTitle(str(kwargs.get('windowTitle', ' ')))
+        except Exception as e:
+            print(e)
+        msg.exec_()
 
     # Methods
     # Form methods
@@ -957,6 +974,75 @@ class MainWindow(qtw.QWidget):
             if precio != 0:
                 self.grid2.itemAtPosition(item_row, 7).widget().setText(str(precio))
                 item_row += 1
+
+    def checker(self):
+        """Checkear todos los campos antes de cargar la venta"""
+        for i in range(self.grid2.count()):
+            item = self.grid2.itemAt(i).widget()
+            if isinstance(item, qtw.QLineEdit):
+                if item.objectName().startswith('total') and len(item.text()) == 0:
+                    item.setText('0')
+                    print(item.objectName())
+                elif item.objectName().startswith('p_') and len(item.text()) == 0:
+                    item.setText('0')
+                    print(item.objectName())
+                elif item.objectName() == 'pp' and len(item.text()) == 0:
+                    item.setText('0')
+                    print(item.objectName())
+                elif item.objectName() == 'var' and len(item.text()) == 0:
+                    item.setText('0')
+                    print(item.objectName())
+                else:
+                    if len(item.text()) == 0 and len(item.objectName()) != 0:
+                        item.setText('S/D')
+                        print(item.objectName())
+        print('Running other function')
+        self.cargar_venta()
+
+
+    def cargar_venta(self):
+        """Cargar toda la información al CSV de presupuestos"""
+        try:
+            pedido = {'id': self.presupuesto['id'].max() + 1, 'F_Entrega': self.fecha_entrega.text(),
+                      'F_Recepción': self.fecha_rec.text(), 'F_Realizacion': '19/9/1999',
+                      'Cliente': self.cliente.text(), 'Motivo': self.motivo.toPlainText(),
+                      'cto1': float(self.med_final_cm_ancho.text()),
+                      'cto2': float(self.med_final_cm_alto.text()),
+                      'ctpp': float(self.pp_cm.text()), 'ctvar': float(self.var.text()),
+                      'ctotros': self.otro1.text(), 'cttotalotros': float(self.p_otro1.text()),
+                      'ctotros1': self.otro2.text(), 'cttotalotros1': float(self.p_otro2.text()),
+                      'ctotros2': self.otro3.text(), 'cttotalotros2': float(self.p_otro3.text()),
+                      'Total_General': float(self.total.text()), 'Cant': float(self.cantidad.text())
+                      }
+            print(pedido)
+        except Exception as e:
+            print(e)
+        # Productos
+        count = 1
+        col1 = 1  # columna de nombre
+        col2 = 7   # columna de precios
+        for row in range(8, 16):
+            producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
+            print(producto)
+            if len(producto) > 0:
+                precio = self.grid2.itemAtPosition(row, col2).widget().text()
+                # get item id
+                item_id = self.productos[
+                    self.productos['DenominaciónCompleta'] == producto]['Contador']
+                pedido['CCProducto' + str(count)] = item_id
+                pedido['ctpreciouni' + str(count)] = float(precio)
+                count += 1
+            else:
+                item_id = 0
+                precio = 0
+                pedido['CCProducto' + str(count)] = item_id
+                pedido['ctpreciouni' + str(count)] = precio
+                count += 1
+            print(count)
+        new_df = pd.DataFrame([pedido])
+        self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
+        print('Done')
+        
 
 
     @qtc.pyqtSlot()
