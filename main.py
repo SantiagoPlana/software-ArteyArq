@@ -309,6 +309,7 @@ class Tabla(qtw.QDialog):
 
 class MainWindow(qtw.QWidget):
 
+    settings = qtc.QSettings('Arte & Arquitectura', 'Gestor Arte & Arquitectura')
     start = time.time()
     presupuesto = pd.read_csv('database/DB/presupuestos_limpio.csv', sep=',')
     productos = pd.read_csv('database/DB/productos.csv', sep=',')
@@ -323,7 +324,11 @@ class MainWindow(qtw.QWidget):
         self.setWindowIcon(QIcon('png_aya.ico'))
         # self.showFullScreen()
 
-        self.center()
+        # self.center()
+        try:
+            self.resize(self.settings.value('window size'))
+        except:
+            pass
 
         self.menu = qtw.QMenuBar(objectName='menu')
         # self.menu.addAction('Guardar cambios')
@@ -820,6 +825,11 @@ class MainWindow(qtw.QWidget):
         # Show
         self.show()
 
+    # Settings
+    def closeEvent(self, event):
+        """Método que se dispara al cerrar el programa."""
+        self.settings.setValue('window size', self.size())
+
     # Display
     def center(self):
         geometry = self.frameGeometry()
@@ -896,7 +906,9 @@ class MainWindow(qtw.QWidget):
 
         self.completar_precios(subset)
         self.completar_productos_from_work(subset)
-    
+        self.completar_otros_items(subset)
+        self.completar_otros_precios(subset)
+
     def completar_productos_from_work(self, subset):
         productos = [col for col in subset.columns if col.startswith('CC')]
         # precios = [col for col in subset.columns if col.startswith('ctpreciouni')]
@@ -913,17 +925,39 @@ class MainWindow(qtw.QWidget):
 
     def completar_precios(self, subset):
         """Esta función completa con los precios con los que se fijaron presupuestos pasados"""
-        try:
-            precios = [col for col in subset.columns if col.startswith('ctpreciouni')]
-            item_row = 8
-            for col in precios:
-                precio = subset.loc[:, col].values[0]
-                if precio != 0:
+        precios = [col for col in subset.columns if col.startswith('ctpreciouni')]
+        #print(precios)
+        item_row = 8
+        for col in precios:
+            precio = subset.loc[:, col].values[0]
+            if precio != 0:
+                try:
                     self.grid2.itemAtPosition(item_row, 6).widget().setText(str(precio))
+                    #print(precio, 'Done')
                     item_row += 1
+                except Exception as e:
+                    print(e)
                 # print('Done', item_row, precio)
-        except Exception as e:
-            print(e)
+        #print('...')
+
+    def completar_otros_items(self, subset):
+        otros = subset[['ctotros', 'ctotros1', 'ctotros2']]
+        item_row = 17
+        for col in otros:
+            item = subset.loc[:, col].values[0]
+            if item != 'S/D':
+                self.grid2.itemAtPosition(item_row, 1).widget().setText(item)
+                item_row += 1
+
+    def completar_otros_precios(self, subset):
+        otros = subset[['cttotalotros', 'cttotalotros1', 'cttotalotros2']]
+        item_row = 17
+        for col in otros:
+            precio = subset.loc[:, col].values[0]
+            if precio != 0:
+                self.grid2.itemAtPosition(item_row, 7).widget().setText(str(precio))
+                item_row += 1
+
 
     @qtc.pyqtSlot()
     def borrar(self):
@@ -1011,7 +1045,7 @@ class MainWindow(qtw.QWidget):
     # Display
     def display_total(self):
         # Muestra el total en la QLabel correspondiente
-        total = 0
+        total_final = 0
         if len(self.cantidad.text()) == 0:
             cantidad = 0
         elif len(self.cantidad.text()) != 0:
@@ -1022,22 +1056,22 @@ class MainWindow(qtw.QWidget):
                     if isinstance(item, qtw.QLineEdit):
                         text = self.grid2.itemAtPosition(row, 7).widget().text()
                         if len(text) > 0:
-                            total += float(text)
-        total = total * cantidad
-        total = '%.2f' % total
-        self.total.setText(str(total))
+                            total_final += float(text)
+        total_final = total_final * cantidad
+        total_final = '%.2f' % total_final
+        self.total.setText(str(total_final))
 
     def display_p_unitario(self):
-        total = 0
+        total_unitario = 0
         for row in range(8, 20):
             if row != 16:
                 item = self.grid2.itemAtPosition(row, 7).widget()
                 if isinstance(item, qtw.QLineEdit):
                     text = item.text()
                     if len(text) > 0:
-                        total += float(text)
-        total = '%.2f' % total
-        self.punit.setText(str(total))
+                        total_unitario += float(text)
+        total_unitario = '%.2f' % total_unitario
+        self.punit.setText(str(total_unitario))
 
     def abrir_tabla_presupuestos(self):
         try:
