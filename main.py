@@ -335,6 +335,7 @@ class MainWindow(qtw.QWidget):
         self.menu.addAction('Abrir tabla productos', self.abrir_tabla_productos)
         self.menu.addAction('Abrir tabla de presupuestos', self.abrir_tabla_presupuestos)
 
+        self.status_bar = qtw.QStatusBar()
 
         self.title = qtw.QLabel('Presupuesto', objectName='titulo')
         self.title.setAlignment(qtc.Qt.AlignTop)
@@ -565,6 +566,8 @@ class MainWindow(qtw.QWidget):
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
         main_layout.addLayout(self.grid2)
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 50))
+        # main_layout.addWidget(self.status_bar)
+
         end = time.time()
         total = end - start
         print(f'Widgets and layout: {total}')
@@ -602,6 +605,16 @@ class MainWindow(qtw.QWidget):
         )
         year_subset = [year for year in year_subset if year == self.year]
         self.trabajos_año.addItems(year_subset)
+
+        # Presupuestos pendientes
+        pendientes = self.presupuesto[self.presupuesto['Completado'] == 0]['Motivo']
+        self.pendientes_completer = qtw.QCompleter(pendientes, self)
+        self.pendientes_completer.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.pendientes_completer.setFilterMode(qtc.Qt.MatchContains)
+        self.presupuestos_pendientes.addItem('')
+        self.presupuestos_pendientes.addItems(pendientes)
+        self.presupuestos_pendientes.setEditable(True)
+        self.presupuestos_pendientes.setCompleter(self.pendientes_completer)
 
         # Productos
         self.combo1.addItem('')
@@ -789,6 +802,11 @@ class MainWindow(qtw.QWidget):
         self.trabajos_todos.activated.connect(lambda: self.complete_from_work(
             string=self.trabajos_todos.currentText()
         ))
+        self.presupuestos_pendientes.activated.connect(
+            lambda: self.complete_from_work(
+                string=self.presupuestos_pendientes.currentText()
+            )
+        )
 
         # stylesheet
 
@@ -888,7 +906,7 @@ class MainWindow(qtw.QWidget):
             except Exception as e:
                 print(e)
 
-    # !Pendiente
+    # Pendiente !
     def complete_from_client(self, string):
         # Hace falta aclaración con respecto de los datos antes de implementar este método
         subset = self.presupuesto[
@@ -902,7 +920,6 @@ class MainWindow(qtw.QWidget):
             if row == 7:
                 item = self.grid2.itemAtPosition(row, 0).widget()
 
-    # !Pendiente
     def complete_from_work(self, string):
         self.borrar()
         subset = self.presupuesto[
@@ -999,20 +1016,24 @@ class MainWindow(qtw.QWidget):
         print('Running other function')
         self.cargar_venta()
 
-
     def cargar_venta(self):
         """Cargar toda la información al CSV de presupuestos"""
+        cto1 = self.med_orig_cm_ancho.text().replace(',', '.')
+        cto2 = self.med_orig_cm_alto.text().replace(',', '.')
+        ctpp = self.pp_cm.text().replace(',', '.')
+        ctvar = self.var.text().replace(',', '.')
         try:
             pedido = {'id': self.presupuesto['id'].max() + 1, 'F_Entrega': self.fecha_entrega.text(),
-                      'F_Recepción': self.fecha_rec.text(), 'F_Realizacion': '19/9/1999',
+                      'F_Recepción': self.fecha_rec.text(),
+                      'F_Realizacion': qtc.QDateTime.currentDateTime().toString('dd/MM/yyyy'),
                       'Cliente': self.cliente.text(), 'Motivo': self.motivo.toPlainText(),
-                      'cto1': float(self.med_final_cm_ancho.text()),
-                      'cto2': float(self.med_final_cm_alto.text()),
-                      'ctpp': float(self.pp_cm.text()), 'ctvar': float(self.var.text()),
-                      'ctotros': self.otro1.text(), 'cttotalotros': float(self.p_otro1.text()),
+                      'cto1': float(cto1), 'cto2': float(cto2), 'ctpp': float(ctpp),
+                      'ctvar': float(ctvar), 'ctotros': self.otro1.text(),
+                      'cttotalotros': float(self.p_otro1.text()),
                       'ctotros1': self.otro2.text(), 'cttotalotros1': float(self.p_otro2.text()),
                       'ctotros2': self.otro3.text(), 'cttotalotros2': float(self.p_otro3.text()),
-                      'Total_General': float(self.total.text()), 'Cant': float(self.cantidad.text())
+                      'Total_General': float(self.total.text()), 'Cant': float(self.cantidad.text()),
+                      'Completado': 0
                       }
             print(pedido)
         except Exception as e:
@@ -1028,7 +1049,7 @@ class MainWindow(qtw.QWidget):
                 precio = self.grid2.itemAtPosition(row, col2).widget().text()
                 # get item id
                 item_id = self.productos[
-                    self.productos['DenominaciónCompleta'] == producto]['Contador']
+                    self.productos['DenominaciónCompleta'] == producto]['Contador'].values[0]
                 pedido['CCProducto' + str(count)] = item_id
                 pedido['ctpreciouni' + str(count)] = float(precio)
                 count += 1
@@ -1042,8 +1063,24 @@ class MainWindow(qtw.QWidget):
         new_df = pd.DataFrame([pedido])
         self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
         print('Done')
-        
+        self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+        print('Saved')
+        # self.presupuesto = pd.read_csv('database/DB/presupuestos_limpio.csv')
+        # self.completer_trabajos = qtw.QCompleter(self.presupuesto.loc[:, 'Motivo'], self)
+        # self.trabajos_todos.setCompleter(self.completer_trabajos)
 
+    def completar_trabajo(self):
+        cliente = self.cliente.text()
+        motivo = self.motivo.text()
+        index = self.presupuesto[
+            (self.presupuesto['Cliente'] == cliente) & (self.presupuesto['Motivo'] == motivo)].index[0]
+        print(index)
+        # self.presupuesto.drop(index, axis='index', inplace=True)
+        self.presupuesto.iloc[index, -1] = 1
+        # Borrar esta línea luego de implementar guardado
+        self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+        self.status_bar.showMessage('Trabajo completado', 20000)
+        print('Done')
 
     @qtc.pyqtSlot()
     def borrar(self):
