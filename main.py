@@ -566,7 +566,8 @@ class MainWindow(qtw.QWidget):
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
         main_layout.addLayout(self.grid2)
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 50))
-        # main_layout.addWidget(self.status_bar)
+        main_layout.addWidget(self.status_bar)
+        self.status_bar.showMessage('HEEEEEEEEEEEY', 20000)
 
         end = time.time()
         total = end - start
@@ -782,6 +783,9 @@ class MainWindow(qtw.QWidget):
         # Confirmar trabajo
         self.btn_pdf.clicked.connect(self.checker)
 
+        # Marcar trabajo como completo
+        self.trabajo_completo.clicked.connect(self.completar_trabajo)
+
         # Medidas
         self.med_orig_cm_ancho.textChanged.connect(self.calculo_medidas)
         self.med_orig_cm_alto.textChanged.connect(self.calculo_medidas)
@@ -840,9 +844,12 @@ class MainWindow(qtw.QWidget):
                                                       "selection-color:solidblack;")
         self.completer_trabajos.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                       "selection-background-color: #FF9B99;"
-                                                       "selection-color: solidblack;")
+                                                        "selection-color: solidblack;")
+        self.pendientes_completer.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                        "selection-background-color: #FF9B99;"
+                                                        "selection-color: solidblack;")
 
-
+        self.status_bar.setStyleSheet("color:#FF9B99; ")
         # Show
         self.show()
 
@@ -1025,7 +1032,7 @@ class MainWindow(qtw.QWidget):
         try:
             pedido = {'id': self.presupuesto['id'].max() + 1, 'F_Entrega': self.fecha_entrega.text(),
                       'F_Recepción': self.fecha_rec.text(),
-                      'F_Realizacion': qtc.QDateTime.currentDateTime().toString('dd/MM/yyyy'),
+                      'F_Realizacion': 'S/D',
                       'Cliente': self.cliente.text(), 'Motivo': self.motivo.toPlainText(),
                       'cto1': float(cto1), 'cto2': float(cto2), 'ctpp': float(ctpp),
                       'ctvar': float(ctvar), 'ctotros': self.otro1.text(),
@@ -1070,17 +1077,25 @@ class MainWindow(qtw.QWidget):
         # self.trabajos_todos.setCompleter(self.completer_trabajos)
 
     def completar_trabajo(self):
+        # print('function')
         cliente = self.cliente.text()
-        motivo = self.motivo.text()
-        index = self.presupuesto[
-            (self.presupuesto['Cliente'] == cliente) & (self.presupuesto['Motivo'] == motivo)].index[0]
-        print(index)
-        # self.presupuesto.drop(index, axis='index', inplace=True)
-        self.presupuesto.iloc[index, -1] = 1
-        # Borrar esta línea luego de implementar guardado
-        self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
-        self.status_bar.showMessage('Trabajo completado', 20000)
-        print('Done')
+        motivo = self.motivo.toPlainText()
+        # print(cliente, motivo)
+        if len(cliente) > 0 and len(motivo) > 0:
+            fecha = qtc.QDateTime.currentDateTime().toString('dd/MM/yyyy')
+            index = self.presupuesto[
+                (self.presupuesto['Cliente'] == cliente) & (self.presupuesto['Motivo'] == motivo)].index[0]
+            #print(index)
+            # self.presupuesto.drop(index, axis='index', inplace=True)
+            self.presupuesto.iloc[index, -1] = 1
+            self.presupuesto.iloc[index, 3] = fecha
+            # Borrar esta línea luego de implementar guardado
+            self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+            self.status_bar.showMessage(
+                f'Trabajo de {cliente} con motivo: "{motivo}" completado el día {fecha}',
+                20000)
+            self.borrar()
+        #print('Done')
 
     @qtc.pyqtSlot()
     def borrar(self):
