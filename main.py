@@ -778,7 +778,8 @@ class MainWindow(qtw.QWidget):
                                                   self.borrar_precios(self.grid2.indexOf(self.combo8)))
 
         # Borrar
-        self.btn_borrar.clicked.connect(self.borrar)
+        self.btn_borrar.clicked.connect(self.borrar_formulario)
+        self.eliminar_presupuesto.clicked.connect(self.borrar_presupuesto_cargado)
 
         # Confirmar trabajo
         self.btn_pdf.clicked.connect(self.checker)
@@ -928,7 +929,7 @@ class MainWindow(qtw.QWidget):
                 item = self.grid2.itemAtPosition(row, 0).widget()
 
     def complete_from_work(self, string):
-        self.borrar()
+        self.borrar_formulario()
         subset = self.presupuesto[
             self.presupuesto['Motivo'] == string
         ]
@@ -1095,11 +1096,11 @@ class MainWindow(qtw.QWidget):
             self.status_bar.showMessage(
                 f'Trabajo de {cliente} con motivo: "{motivo}" completado el día {fecha}',
                 15000)
-            self.borrar()
+            self.borrar_formulario()
         #print('Done')
 
     @qtc.pyqtSlot()
-    def borrar(self):
+    def borrar_formulario(self):
         for i in range(self.grid1.count()):
             item = self.grid1.itemAt(i).widget()
             if isinstance(item, qtw.QComboBox):
@@ -1116,6 +1117,27 @@ class MainWindow(qtw.QWidget):
         self.display_total()
         #self.display_p_unitario()
 
+    def borrar_presupuesto_cargado(self):
+        cliente = self.cliente.text()
+        motivo = self.motivo.toPlainText()
+        # print(cliente, motivo)
+        if len(cliente) > 0 and len(motivo) > 0:
+            index = self.presupuesto[
+                (self.presupuesto['Cliente'] == cliente) & (self.presupuesto['Motivo'] == motivo)].index[0]
+            print(index)
+            msg = qtw.QMessageBox()
+            msg.setText(
+                f'Está seguro de que desea borrar el trabajo de {cliente} con motivo: {motivo}?')
+            msg.setStandardButtons(qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel)
+            ret = msg.exec_()
+            if ret == qtw.QMessageBox.Ok:
+                self.presupuesto.drop(index, axis='index', inplace=True)
+                self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+                self.status_bar.showMessage(
+                    f'Se eliminó el trabajo de {cliente} con motivo "{motivo}".', 15000)
+                self.borrar_formulario()
+            else:
+                msg.close()
     # Cálculos
 
     @qtc.pyqtSlot()
