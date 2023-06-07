@@ -1051,7 +1051,7 @@ class MainWindow(qtw.QWidget):
         col2 = 7   # columna de precios
         for row in range(8, 16):
             producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
-            print(producto)
+            # print(producto)
             if len(producto) > 0:
                 precio = self.grid2.itemAtPosition(row, col2).widget().text()
                 # get item id
@@ -1066,12 +1066,13 @@ class MainWindow(qtw.QWidget):
                 pedido['CCProducto' + str(count)] = item_id
                 pedido['ctpreciouni' + str(count)] = precio
                 count += 1
-            print(count)
+            # print(count)
         new_df = pd.DataFrame([pedido])
         self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
-        print('Done')
+        # print('Done')
         self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
         print('Saved')
+        self.status_bar.showMessage('Presupuesto cargado correctamente', 15000)
         # self.presupuesto = pd.read_csv('database/DB/presupuestos_limpio.csv')
         # self.completer_trabajos = qtw.QCompleter(self.presupuesto.loc[:, 'Motivo'], self)
         # self.trabajos_todos.setCompleter(self.completer_trabajos)
@@ -1093,7 +1094,7 @@ class MainWindow(qtw.QWidget):
             self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
             self.status_bar.showMessage(
                 f'Trabajo de {cliente} con motivo: "{motivo}" completado el día {fecha}',
-                20000)
+                15000)
             self.borrar()
         #print('Done')
 
@@ -1165,9 +1166,16 @@ class MainWindow(qtw.QWidget):
                     if len(self.sup_m2.text()) != 0:
                         p_total = float(widget.text()) * float(self.sup_m2.text())
                         p_total = '%.2f' % p_total
-                elif item_id == 'L' or item_id == 'P':
+                elif item_id == 'L':
                     if len(self.per_ml.text()) != 0:
                         p_total = float(widget.text()) * float(self.per_ml.text())
+                        p_total = '%.2f' % p_total
+                elif item_id == 'P':
+                    alto = self.med_final_cm_alto.text()
+                    ancho = self.med_final_cm_ancho.text()
+                    if len(alto) != 0 and len(ancho) != 0:
+                        highest = max(float(alto), float(ancho))
+                        p_total = float(widget.text()) * (highest / 100)
                         p_total = '%.2f' % p_total
                 elif item_id == 'U':
                     p_total = widget.text()
