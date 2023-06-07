@@ -248,8 +248,9 @@ class Tabla(qtw.QDialog):
             msg = qtw.QMessageBox()
             msg.setText(f'¿Está seguro de que desea modificar {len(idxs)} elementos?')
             msg.setWindowTitle(' ')
-            msg.exec_()
-            if msg.sender():
+            msg.setStandardButtons(qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel)
+            ret = msg.exec_()
+            if ret == qtw.QMessageBox.Ok:
                 # print('Accepted')
                 for idx in idxs:
                     try:
@@ -264,6 +265,8 @@ class Tabla(qtw.QDialog):
                         self.display_msg(msg, icon=qtw.QMessageBox.Critical,
                                          informativeText=f'Elemento: {idx.data()}',
                                          windowTitle='Error')
+                else:
+                    msg.close()
 
     def sumar_porcentaje(self, porcentaje):
         idxs = self.table.selectedIndexes()
@@ -272,8 +275,9 @@ class Tabla(qtw.QDialog):
             msg = qtw.QMessageBox()
             msg.setText(f'¿Está seguro de que desea modificar {len(idxs)} elementos?')
             msg.setWindowTitle(' ')
-            msg.exec_()
-            if msg.sender():
+            msg.setStandardButtons(qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel)
+            ret = msg.exec_()
+            if ret == qtw.QMessageBox.Ok:
                 # print('Accepted')
                 for idx in idxs:
                     try:
@@ -287,10 +291,12 @@ class Tabla(qtw.QDialog):
                         self.model._data[row][col] = nuevo_precio
                         # self.statusBar().showMessage('Valores modificados correctamente.', 10000)
                     except Exception as e:
-                        msg = 'Seleccione únicamente celdas que contengan números.'
-                        self.display_msg(msg, icon=qtw.QMessageBox.Critical,
+                        text = 'Seleccione únicamente celdas que contengan números.'
+                        self.display_msg(text, icon=qtw.QMessageBox.Critical,
                                          informativeText=f'Elemento: {idx.data()}',
                                          windowTitle='Error')
+                else:
+                    msg.close()
 
     def display_msg(self, string, **kwargs):
         msg = qtw.QMessageBox()
@@ -850,7 +856,7 @@ class MainWindow(qtw.QWidget):
                                                         "selection-background-color: #FF9B99;"
                                                         "selection-color: solidblack;")
 
-        self.status_bar.setStyleSheet("color:#FF9B99; ")
+        self.status_bar.setStyleSheet("color:white; font-size: 13pt;")
         # Show
         self.show()
 
