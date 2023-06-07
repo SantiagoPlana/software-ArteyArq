@@ -788,7 +788,7 @@ class MainWindow(qtw.QWidget):
         self.eliminar_presupuesto.clicked.connect(self.borrar_presupuesto_cargado)
 
         # Confirmar trabajo
-        self.btn_pdf.clicked.connect(self.checker)
+        self.btn_pdf.clicked.connect(self.cargar_venta)
 
         # Marcar trabajo como completo
         self.trabajo_completo.clicked.connect(self.completar_trabajo)
@@ -1023,7 +1023,7 @@ class MainWindow(qtw.QWidget):
                 elif item.objectName() == 'var' and len(item.text()) == 0:
                     item.setText('0')
                     print(item.objectName())
-                else:
+                else:  # lineEdits de "otros"
                     if len(item.text()) == 0 and len(item.objectName()) != 0:
                         item.setText('S/D')
                         print(item.objectName())
@@ -1036,23 +1036,38 @@ class MainWindow(qtw.QWidget):
         cto2 = self.med_orig_cm_alto.text().replace(',', '.')
         ctpp = self.pp_cm.text().replace(',', '.')
         ctvar = self.var.text().replace(',', '.')
-        try:
-            pedido = {'id': self.presupuesto['id'].max() + 1, 'F_Entrega': self.fecha_entrega.text(),
-                      'F_Recepción': self.fecha_rec.text(),
-                      'F_Realizacion': 'S/D',
-                      'Cliente': self.cliente.text(), 'Motivo': self.motivo.toPlainText(),
-                      'cto1': float(cto1), 'cto2': float(cto2), 'ctpp': float(ctpp),
-                      'ctvar': float(ctvar), 'ctotros': self.otro1.text(),
-                      'cttotalotros': float(self.p_otro1.text()),
-                      'ctotros1': self.otro2.text(), 'cttotalotros1': float(self.p_otro2.text()),
-                      'ctotros2': self.otro3.text(), 'cttotalotros2': float(self.p_otro3.text()),
-                      'Total_General': float(self.total.text()), 'Cant': float(self.cantidad.text()),
-                      'Completado': 0
-                      }
-            print(pedido)
-        except Exception as e:
-            print(e)
-        # Productos
+
+        # try:
+        pedido = {'id': self.presupuesto['id'].max() + 1, 'F_Entrega': self.fecha_entrega.text(),
+                  'F_Recepción': self.fecha_rec.text(),
+                  'F_Realizacion': 'S/D',
+                  'Cliente': self.cliente.text(), 'Motivo': self.motivo.toPlainText(),
+                  'cto1': cto1, 'cto2': cto2, 'ctpp': ctpp,
+                  'ctvar': ctvar, 'ctotros': self.otro1.text(),
+                  'cttotalotros': self.p_otro1.text(),
+                  'ctotros1': self.otro2.text(), 'cttotalotros1': self.p_otro2.text(),
+                  'ctotros2': self.otro3.text(), 'cttotalotros2': self.p_otro3.text(),
+                  'Total_General': self.total.text(), 'Cant': self.cantidad.text(),
+                  'Completado': 0
+                  }
+        float_cols = ['cto1', 'cto2', 'ctpp', 'ctvar', 'cttotalotros', 'cttotalotros1',
+                      'cttotalotros2', 'Total_General', 'Cant']
+        text_cols = ['F_Entrega', 'F_Recepción', 'Cliente', 'Motivo', 'ctotros', 'ctotros1', 'ctotros2',
+                     ]
+        for col in float_cols:
+            try:
+                pedido[col] = float(pedido[col])
+            except Exception as e:
+                print(col, e)
+                pedido[col] = 0
+        for col in text_cols:
+            try:
+                if len(pedido[col]) == 0:
+                    pedido[col] = 'S/D'
+            except Exception as e:
+                print(col, e)
+
+        # print(pedido)
         count = 1
         col1 = 1  # columna de nombre
         col2 = 7   # columna de precios
