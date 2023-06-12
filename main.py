@@ -615,13 +615,13 @@ class MainWindow(qtw.QWidget):
 
         # Presupuestos pendientes
         pendientes = self.presupuesto[self.presupuesto['Completado'] == 0]['Motivo']
-        self.pendientes_completer = qtw.QCompleter(pendientes, self)
-        self.pendientes_completer.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.pendientes_completer.setFilterMode(qtc.Qt.MatchContains)
+        self.completer_pendientes = qtw.QCompleter(pendientes, self)
+        self.completer_pendientes.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.completer_pendientes.setFilterMode(qtc.Qt.MatchContains)
         self.presupuestos_pendientes.addItem('')
         self.presupuestos_pendientes.addItems(pendientes)
         self.presupuestos_pendientes.setEditable(True)
-        self.presupuestos_pendientes.setCompleter(self.pendientes_completer)
+        self.presupuestos_pendientes.setCompleter(self.completer_pendientes)
 
         # Productos
         self.combo1.addItem('')
@@ -852,7 +852,7 @@ class MainWindow(qtw.QWidget):
         self.completer_trabajos.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                       "selection-background-color: #FF9B99;"
                                                         "selection-color: solidblack;")
-        self.pendientes_completer.popup().setStyleSheet("color: white; font-size: 13pt;"
+        self.completer_pendientes.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                         "selection-background-color: #FF9B99;"
                                                         "selection-color: solidblack;")
 
@@ -865,7 +865,45 @@ class MainWindow(qtw.QWidget):
         """Método que se dispara al cerrar el programa."""
         self.settings.setValue('window size', self.size())
 
+    # Completer initiator
+    def completers_from_presupuesto(self):
+        """Iniciar y actualizar completers desde la base de datos de presupuestos"""
+        # database
+        presupuesto = pd.read_csv(
+            'database/DB/presupuestos_limpio.csv')
+        # Instanciar completers
+
+        self.completer_trabajos = qtw.QCompleter(
+            presupuesto.loc[:, 'Motivo'], self
+        )
+        self.completer_clientes = qtw.QCompleter(
+            presupuesto.loc[:, 'Cliente'], self
+        )
+        pendientes = presupuesto[self.presupuesto['Completado'] == 0]['Motivo']
+        self.completer_pendientes = qtw.QCompleter(pendientes, self)
+        # Propiedades
+        self.completer_trabajos.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.completer_trabajos.setFilterMode(qtc.Qt.MatchContains)
+        self.completer_clientes.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.completer_clientes.setFilterMode(qtc.Qt.MatchContains)
+        self.completer_pendientes.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.completer_pendientes.setFilterMode(qtc.Qt.MatchContains)
+        # set
+        self.trabajos_todos.setCompleter(self.completer_trabajos)
+        self.clientes_combo.setCompleter(self.completer_clientes)
+        self.presupuestos_pendientes.setCompleter(self.completer_pendientes)
+        print('Set')
+        self.completer_clientes.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                      "selection-background-color: #FF9B99;"
+                                                        "selection-color: solidblack;")
+        self.completer_trabajos.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                      "selection-background-color: #FF9B99;"
+                                                      "selection-color: solidblack;")
+        self.completer_pendientes.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                      "selection-background-color: #FF9B99;"
+                                                      "selection-color: solidblack;")
     # Display
+
     def center(self):
         geometry = self.frameGeometry()
         dsktp_geo = qtw.QDesktopWidget().availableGeometry().center()
@@ -1027,7 +1065,7 @@ class MainWindow(qtw.QWidget):
                     if len(item.text()) == 0 and len(item.objectName()) != 0:
                         item.setText('S/D')
                         print(item.objectName())
-        print('Running other function')
+        # print('Running other function')
         self.cargar_venta()
 
     def cargar_venta(self):
@@ -1094,10 +1132,8 @@ class MainWindow(qtw.QWidget):
         # print('Done')
         self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
         print('Saved')
+        self.completers_from_presupuesto()
         self.status_bar.showMessage('Presupuesto cargado correctamente', 15000)
-        # self.presupuesto = pd.read_csv('database/DB/presupuestos_limpio.csv')
-        # self.completer_trabajos = qtw.QCompleter(self.presupuesto.loc[:, 'Motivo'], self)
-        # self.trabajos_todos.setCompleter(self.completer_trabajos)
 
     def completar_trabajo(self):
         # print('function')
@@ -1157,6 +1193,7 @@ class MainWindow(qtw.QWidget):
                 self.status_bar.showMessage(
                     f'Se eliminó el trabajo de {cliente} con motivo "{motivo}".', 15000)
                 self.borrar_formulario()
+                self.completers_from_presupuesto()
             else:
                 msg.close()
     # Cálculos
@@ -1193,7 +1230,7 @@ class MainWindow(qtw.QWidget):
         self.calculo_total(final_ancho, final_alto)
 
     def calculo_total(self, ancho, alto):
-        # Calcula el total unitario para cada item
+        """Calcula el total unitario para cada item"""
         # print(ancho, alto)
         col = 6
         p_total = 0
@@ -1233,7 +1270,7 @@ class MainWindow(qtw.QWidget):
 
     # Display
     def display_total(self):
-        # Muestra el total en la QLabel correspondiente
+        """Muestra el total en la QLabel correspondiente"""
         total_final = 0
         if len(self.cantidad.text()) == 0:
             cantidad = 0
@@ -1251,6 +1288,7 @@ class MainWindow(qtw.QWidget):
         self.total.setText(str(total_final))
 
     def display_p_unitario(self):
+        """Muestra el precio unitario en la QLabel correspondiente"""
         total_unitario = 0
         for row in range(8, 20):
             if row != 16:
