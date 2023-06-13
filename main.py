@@ -872,14 +872,14 @@ class MainWindow(qtw.QWidget):
         presupuesto = pd.read_csv(
             'database/DB/presupuestos_limpio.csv')
         # Instanciar completers
-
         self.completer_trabajos = qtw.QCompleter(
             presupuesto.loc[:, 'Motivo'], self
         )
         self.completer_clientes = qtw.QCompleter(
             presupuesto.loc[:, 'Cliente'], self
         )
-        pendientes = presupuesto[self.presupuesto['Completado'] == 0]['Motivo']
+        pendientes = presupuesto[presupuesto['Completado'] == 0]['Motivo']
+
         self.completer_pendientes = qtw.QCompleter(pendientes, self)
         # Propiedades
         self.completer_trabajos.setCaseSensitivity(qtc.Qt.CaseInsensitive)
@@ -902,13 +902,10 @@ class MainWindow(qtw.QWidget):
         self.completer_pendientes.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                       "selection-background-color: #FF9B99;"
                                                       "selection-color: solidblack;")
-    # Display
 
-    def center(self):
-        geometry = self.frameGeometry()
-        dsktp_geo = qtw.QDesktopWidget().availableGeometry().center()
-        geometry.moveCenter(dsktp_geo)
-        self.move(geometry.topLeft())
+    def update_combos(self):
+        pass
+    # Display
 
     def message(self, string, **kwargs):
         msg = qtw.QMessageBox()
@@ -924,8 +921,8 @@ class MainWindow(qtw.QWidget):
             print(e)
         msg.exec_()
 
-    # Methods
     # Form methods
+
     @qtc.pyqtSlot()
     def complete_products(self, string, idx):
         subset = self.productos[
@@ -973,27 +970,31 @@ class MainWindow(qtw.QWidget):
                 item = self.grid2.itemAtPosition(row, 0).widget()
 
     def complete_from_work(self, string):
-        self.borrar_formulario()
-        subset = self.presupuesto[
-            self.presupuesto['Motivo'] == string
-        ]
-        self.fecha_rec.setText(subset['F_Recepción'].values[0])
-        self.fecha_entrega.setText(subset['F_Entrega'].values[0])
-        self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
-        self.cliente.setText(subset['Cliente'].values[0])
-        self.motivo.setText(subset['Motivo'].values[0])
-        self.cantidad.setText(str(int(subset['Cant'].values[0])))
-        self.med_orig_cm_ancho.setText(str(subset['cto1'].values[0]))
-        self.med_orig_cm_alto.setText(str(subset['cto2'].values[0]))
-        self.var.setText(str(subset['ctvar'].values[0]))
-        self.pp_cm.setText(str(subset['ctpp'].values[0]))
-        self.total.setText(str(subset['Total_General'].values[0]))
-        self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
+        if len(string) != 0:
+            try:
+                self.borrar_formulario()
+                subset = self.presupuesto[
+                    self.presupuesto['Motivo'] == string
+                ]
+                self.fecha_rec.setText(subset['F_Recepción'].values[0])
+                self.fecha_entrega.setText(subset['F_Entrega'].values[0])
+                self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
+                self.cliente.setText(subset['Cliente'].values[0])
+                self.motivo.setText(subset['Motivo'].values[0])
+                self.cantidad.setText(str(int(subset['Cant'].values[0])))
+                self.med_orig_cm_ancho.setText(str(subset['cto1'].values[0]))
+                self.med_orig_cm_alto.setText(str(subset['cto2'].values[0]))
+                self.var.setText(str(subset['ctvar'].values[0]))
+                self.pp_cm.setText(str(subset['ctpp'].values[0]))
+                self.total.setText(str(subset['Total_General'].values[0]))
+                self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
 
-        self.completar_precios(subset)
-        self.completar_productos_from_work(subset)
-        self.completar_otros_items(subset)
-        self.completar_otros_precios(subset)
+                self.completar_precios(subset)
+                self.completar_productos_from_work(subset)
+                self.completar_otros_items(subset)
+                self.completar_otros_precios(subset)
+            except Exception as e:
+                print(e)
 
     def completar_productos_from_work(self, subset):
         productos = [col for col in subset.columns if col.startswith('CC')]
@@ -1134,9 +1135,16 @@ class MainWindow(qtw.QWidget):
         print('Saved')
         self.completers_from_presupuesto()
         self.status_bar.showMessage('Presupuesto cargado correctamente', 15000)
+        # adding to combo boxes
+        self.trabajos_todos.addItem(pedido['Motivo'])
+        self.clientes_combo.addItem(pedido['Cliente'])
+        self.presupuestos_pendientes.addItem(pedido['Motivo'])
+        print(self.trabajos_todos.model)
 
+    @qtc.pyqtSlot()
     def completar_trabajo(self):
         # print('function')
+        combobox_index = self.presupuestos_pendientes.currentIndex()
         cliente = self.cliente.text()
         motivo = self.motivo.toPlainText()
         # print(cliente, motivo)
@@ -1153,7 +1161,9 @@ class MainWindow(qtw.QWidget):
             self.status_bar.showMessage(
                 f'Trabajo de {cliente} con motivo: "{motivo}" completado el día {fecha}',
                 15000)
+            self.presupuestos_pendientes.removeItem(combobox_index)
             self.borrar_formulario()
+
         #print('Done')
 
     @qtc.pyqtSlot()
