@@ -640,7 +640,7 @@ class MainWindow(qtw.QWidget):
 
         self.clientes_combo.addItem('')
         self.clientes_combo.addItems(
-            sorted(self.presupuesto.loc[:, 'Cliente']))
+            sorted(self.presupuesto.loc[:, 'Cliente'].unique()))
         self.trabajos_todos.addItem('')
         self.trabajos_todos.addItems(
             sorted(self.presupuesto.loc[:, 'Motivo'])
@@ -868,7 +868,7 @@ class MainWindow(qtw.QWidget):
             )
         )
         self.clientes_combo.activated.connect(
-            lambda: self.complete_from_cliente_new(
+            lambda: self.complete_from_cliente(
                 string=self.clientes_combo.currentText()
             )
         )
@@ -1019,7 +1019,7 @@ class MainWindow(qtw.QWidget):
                 print(e)
 
     # Pendiente !
-    def complete_from_cliente_new(self, string):
+    def complete_from_cliente(self, string):
         if len(string) != 0:
             try:
                 self.borrar_formulario()
@@ -1033,41 +1033,6 @@ class MainWindow(qtw.QWidget):
             self.trabajos_todos.clear()
             self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
             self.borrar_formulario()
-
-
-    def complete_from_client(self, string, index):
-        # ¿Cómo hacemos para mapear la mabel que sale en el completer al subset dataframe?
-        # El índice relativo no ayuda pq la selección del completer incluye otras entradas
-        # ¿Ayudaría mapear por índice absoluto si sorteamos la lista y el dataframe iguales?
-        if len(string) != 0:
-            try:
-                # combobox_index = self.clientes_combo.currentIndex()
-                print(index)
-                self.borrar_formulario()
-                self.clientes_combo.setCurrentText(string)
-                presupuesto = self.presupuesto.sort_values(by='Cliente').reset_index()
-                subset = presupuesto[presupuesto['Cliente'] == string]
-                subset = subset.loc[index]
-                self.fecha_rec.setText(subset['F_Recepción'])
-                self.fecha_entrega.setText(subset['F_Entrega'])
-                self.fecha_realizacion.setText(subset['F_Realizacion'])
-                self.cliente.setText(subset['Cliente'])
-                self.motivo.setText(subset['Motivo'])
-                self.cantidad.setText(str(int(subset['Cant'])))
-                self.med_orig_cm_ancho.setText(str(subset['cto1']))
-                self.med_orig_cm_alto.setText(str(subset['cto2']))
-                self.var.setText(str(subset['ctvar']))
-                self.pp_cm.setText(str(subset['ctpp']))
-                self.total.setText(str(subset['Total_General']))
-                self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
-
-                subset = subset.to_frame().T
-                self.completar_precios(subset)
-                self.completar_productos_from_work(subset)
-                self.completar_otros_items(subset)
-                self.completar_otros_precios(subset)
-            except Exception as e:
-                print(e)
 
     def complete_from_work(self, string, client):
         if string and not client:
@@ -1120,7 +1085,6 @@ class MainWindow(qtw.QWidget):
             self.completar_productos_from_work(subset)
             self.completar_otros_items(subset)
             self.completar_otros_precios(subset)
-
 
     def completar_productos_from_work(self, subset):
         productos = [col for col in subset.columns if col.startswith('CC')]
