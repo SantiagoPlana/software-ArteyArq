@@ -1,12 +1,51 @@
 import sys
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
-from PyQt5.QtGui import QPixmap, QPainter, QDoubleValidator, QIcon
+from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon
 import pandas as pd
 import csv
 import time
+import traceback
 
-start = time.time()
+start = time.perf_counter()
+
+
+class Signals(qtc.QObject):
+
+    finished = qtc.pyqtSignal()
+    error = qtc.pyqtSignal(tuple)
+    result = qtc.pyqtSignal(object)
+
+
+
+class Worker(qtc.QRunnable):
+
+    def __init__(self, fn, *args, **kwargs):
+        
+        super(Worker, self).__init__()
+        print('initiated')
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = Signals()
+
+    @qtc.pyqtSlot()
+    def run(self):
+        """Inicializa la función"""
+        print('running')
+        print(self.args, self.kwargs)
+        try:
+            result = self.fn(
+                *self.args, **self.kwargs
+            )
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()
 
 
 class CsvTableModel(qtc.QAbstractTableModel):
@@ -109,6 +148,8 @@ class Tabla(qtw.QDialog):
         # database
         self.db = db
 
+        self.threadpool = qtc.QThreadPool()
+
         # Layouts
         self.v_layout = qtw.QVBoxLayout()
         self.h_layout = qtw.QHBoxLayout()
@@ -187,7 +228,9 @@ class Tabla(qtw.QDialog):
 
     def guardar_cambios(self):
         if self.model:
-            self.model.save_data()
+            worker = Worker(self.model.save_data)
+            worker.signals.result.connect(lambda: print('funca'))
+            self.threadpool.start(worker)
             # self.statusBar().showMessage('Archivo guardado correctamente', 1000)
 
     def insert_above(self):
@@ -316,16 +359,16 @@ class Tabla(qtw.QDialog):
 class MainWindow(qtw.QWidget):
 
     settings = qtc.QSettings('Arte & Arquitectura', 'Gestor Arte & Arquitectura')
-    start = time.time()
+    start = time.perf_counter()
     presupuesto = pd.read_csv('database/DB/presupuestos_limpio.csv', sep=',')
     productos = pd.read_csv('database/DB/productos.csv', sep=',')
-    end = time.time()
+    end = time.perf_counter()
     print(end - start)
 
     def __init__(self):
 
         super().__init__()
-        start = time.time()
+        start = time.perf_counter()
         self.setWindowTitle('Arte & Arquitectura')
         self.setWindowIcon(QIcon('png_aya.ico'))
         # self.showFullScreen()
@@ -342,6 +385,8 @@ class MainWindow(qtw.QWidget):
         self.menu.addAction('Abrir tabla de presupuestos', self.abrir_tabla_presupuestos)
 
         self.status_bar = qtw.QStatusBar()
+
+        self.threadpool = qtc.QThreadPool()
 
         self.title = qtw.QLabel('Presupuesto', objectName='titulo')
         self.title.setAlignment(qtc.Qt.AlignTop)
@@ -575,12 +620,12 @@ class MainWindow(qtw.QWidget):
         main_layout.addWidget(self.status_bar)
         self.status_bar.showMessage('HEEEEEEEEEEEY', 20000)
 
-        end = time.time()
+        end = time.perf_counter()
         total = end - start
         print(f'Widgets and layout: {total}')
         #### Combo-boxes ####
         ### Clientes
-        start1 = time.time()
+        start1 = time.perf_counter()
 
         self.completer_trabajos = qtw.QCompleter(
             self.presupuesto.loc[:, 'Motivo'], self
@@ -703,7 +748,7 @@ class MainWindow(qtw.QWidget):
         self.combo7.setCompleter(self.completer_productos7)
         self.combo8.setCompleter(self.completer_productos8)
 
-        end1 = time.time()
+        end1 = time.perf_counter()
         total1 = end1 - start1
         print(f'Combo-box lists and completers: {total1}')
         # Validators
@@ -815,7 +860,7 @@ class MainWindow(qtw.QWidget):
 
         # Motivo
         self.trabajos_todos.activated.connect(lambda: self.complete_from_work(
-            string=self.trabajos_todos.currentText()
+            string=self.trabajos_todos.currentText(), client=self.clientes_combo.currentText()
         ))
         self.presupuestos_pendientes.activated.connect(
             lambda: self.complete_from_work(
@@ -823,8 +868,8 @@ class MainWindow(qtw.QWidget):
             )
         )
         self.clientes_combo.activated.connect(
-            lambda: self.complete_from_client(
-                string=self.clientes_combo.currentText(), index=self.clientes_combo.currentIndex()
+            lambda: self.complete_from_cliente_new(
+                string=self.clientes_combo.currentText()
             )
         )
         # stylesheet
@@ -925,7 +970,7 @@ class MainWindow(qtw.QWidget):
             msg.setWindowTitle(str(kwargs.get('windowTitle', ' ')))
         except Exception as e:
             self.status_bar.showMessage(str(e), 10000)
-        msg.setStandardButtons(qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel)
+        msg.setStandardButtons(qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel | qtw.QMessageBox.Save)
         ret = msg.exec_()
         # msg.buttonClicked(qtw.QMessageBox.Ok).connect(lambda: print('method'))
         # msg.buttonClicked(qtw.QMessageBox.Cancel).connect(msg.close())
@@ -933,7 +978,10 @@ class MainWindow(qtw.QWidget):
             try:
                 method.__call__()
             except Exception as e:
-                self.status_bar.showMessage(e)
+                self.status_bar.showMessage(str(e))
+        elif ret == qtw.QMessageBox.Save:
+            # método para exportar PDF / imprimir presupuesto sin guardarlo
+            print('otro método')
         else:
             msg.close()
     # Form methods
@@ -971,6 +1019,22 @@ class MainWindow(qtw.QWidget):
                 print(e)
 
     # Pendiente !
+    def complete_from_cliente_new(self, string):
+        if len(string) != 0:
+            try:
+                self.borrar_formulario()
+                self.clientes_combo.setCurrentText(string)
+                subset_motivos = self.presupuesto[self.presupuesto['Cliente'] == string]['Motivo'].values
+                self.trabajos_todos.clear()
+                self.trabajos_todos.addItems(subset_motivos)
+            except Exception as e:
+                self.status_bar.showMessage(str(e), 10000)
+        else:
+            self.trabajos_todos.clear()
+            self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
+            self.borrar_formulario()
+
+
     def complete_from_client(self, string, index):
         # ¿Cómo hacemos para mapear la mabel que sale en el completer al subset dataframe?
         # El índice relativo no ayuda pq la selección del completer incluye otras entradas
@@ -980,6 +1044,7 @@ class MainWindow(qtw.QWidget):
                 # combobox_index = self.clientes_combo.currentIndex()
                 print(index)
                 self.borrar_formulario()
+                self.clientes_combo.setCurrentText(string)
                 presupuesto = self.presupuesto.sort_values(by='Cliente').reset_index()
                 subset = presupuesto[presupuesto['Cliente'] == string]
                 subset = subset.loc[index]
@@ -1004,29 +1069,29 @@ class MainWindow(qtw.QWidget):
             except Exception as e:
                 print(e)
 
-    def complete_from_work(self, string):
-        if len(string) != 0:
+    def complete_from_work(self, string, client):
+        if string and not client:
             try:
-                print('1')
                 self.borrar_formulario()
-                print('2')
                 subset = self.presupuesto[
                     self.presupuesto['Motivo'] == string
                 ]
                 if subset.size != 0:
-                    print(subset.size)
-                    self.fecha_rec.setText(subset['F_Recepción'].values[0])
-                    self.fecha_entrega.setText(subset['F_Entrega'].values[0])
-                    self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
-                    self.cliente.setText(subset['Cliente'].values[0])
-                    self.motivo.setText(subset['Motivo'].values[0])
-                    self.cantidad.setText(str(int(subset['Cant'].values[0])))
-                    self.med_orig_cm_ancho.setText(str(subset['cto1'].values[0]))
-                    self.med_orig_cm_alto.setText(str(subset['cto2'].values[0]))
-                    self.var.setText(str(subset['ctvar'].values[0]))
-                    self.pp_cm.setText(str(subset['ctpp'].values[0]))
-                    self.total.setText(str(subset['Total_General'].values[0]))
-                    self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
+                    if subset.size == 1:
+                        print('subset size:', subset.size)
+                        self.fecha_rec.setText(subset['F_Recepción'].values[0])
+                        self.fecha_entrega.setText(subset['F_Entrega'].values[0])
+                        self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
+                        self.cliente.setText(subset['Cliente'].values[0])
+                        self.motivo.setText(subset['Motivo'].values[0])
+                        self.cantidad.setText(str(int(subset['Cant'].values[0])))
+                        self.med_orig_cm_ancho.setText(str(subset['cto1'].values[0]))
+                        self.med_orig_cm_alto.setText(str(subset['cto2'].values[0]))
+                        self.var.setText(str(subset['ctvar'].values[0]))
+                        self.pp_cm.setText(str(subset['ctpp'].values[0]))
+                        self.total.setText(str(subset['Total_General'].values[0]))
+                        self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
+
 
                     self.completar_precios(subset)
                     self.completar_productos_from_work(subset)
@@ -1034,6 +1099,28 @@ class MainWindow(qtw.QWidget):
                     self.completar_otros_precios(subset)
             except Exception as e:
                 print(e)
+        elif string and client:
+            self.borrar_formulario()
+            subset = self.presupuesto[(self.presupuesto['Motivo'] == string) & (self.presupuesto['Cliente'] == client)]
+            print('subset size:', subset.size)
+            self.fecha_rec.setText(subset['F_Recepción'].values[0])
+            self.fecha_entrega.setText(subset['F_Entrega'].values[0])
+            self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
+            self.cliente.setText(subset['Cliente'].values[0])
+            self.motivo.setText(subset['Motivo'].values[0])
+            self.cantidad.setText(str(int(subset['Cant'].values[0])))
+            self.med_orig_cm_ancho.setText(str(subset['cto1'].values[0]))
+            self.med_orig_cm_alto.setText(str(subset['cto2'].values[0]))
+            self.var.setText(str(subset['ctvar'].values[0]))
+            self.pp_cm.setText(str(subset['ctpp'].values[0]))
+            self.total.setText(str(subset['Total_General'].values[0]))
+            self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
+
+            self.completar_precios(subset)
+            self.completar_productos_from_work(subset)
+            self.completar_otros_items(subset)
+            self.completar_otros_precios(subset)
+
 
     def completar_productos_from_work(self, subset):
         productos = [col for col in subset.columns if col.startswith('CC')]
@@ -1349,15 +1436,14 @@ class MainWindow(qtw.QWidget):
         self.punit.setText(str(total_unitario))
 
     def abrir_tabla_presupuestos(self):
-        try:
-            tabla = Tabla('database/DB/presupuestos_limpio.csv')
-            tabla.exec_()
-        except Exception as e:
-            print(e)
+        self.tabla = Tabla('database/DB/presupuestos_limpio.csv')
+        self.tabla.exec_()
+
 
     def abrir_tabla_productos(self):
-        tabla = Tabla('database/DB/productos.csv')
-        tabla.exec_()
+        self.tabla = Tabla('database/DB/productos.csv')
+        self.tabla.exec_()
+
 
 
 stylesheet = '''
@@ -1438,11 +1524,12 @@ QPushButton:hover {background: #A23E48;}
 
 if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
+
     app.setStyleSheet(stylesheet)
     # it's required to save a reference to MainWindow.
     # if it goes out of scope, it will be destroyed.
     mw = MainWindow()
-    end = time.time()
+    end = time.perf_counter()
     total = end - start
     print(f'Total: {total}')
     sys.exit(app.exec())
