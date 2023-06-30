@@ -17,7 +17,6 @@ class Signals(qtc.QObject):
     result = qtc.pyqtSignal(object)
 
 
-
 class Worker(qtc.QRunnable):
 
     def __init__(self, fn, *args, **kwargs):
@@ -138,6 +137,8 @@ class CsvTableModel(qtc.QAbstractTableModel):
 
 class Tabla(qtw.QDialog):
 
+    """Ventana para display de tablas"""
+
     def __init__(self, db):
         super().__init__()
 
@@ -216,9 +217,12 @@ class Tabla(qtw.QDialog):
 
 
         if self.db.split('/')[-1] == 'productos.csv':
+            self.filtro.setCurrentIndex(8)
             self.menubar.addAction('Agregar porcentaje', self.sumar_porcentaje_dialog)
             self.menubar.addAction('Restar porcentaje', self.descontar_porcentaje_dialog)
             self.table.resizeColumnsToContents()
+        else:
+            self.filtro.setCurrentIndex(4)
 
 
     @qtc.pyqtSlot()
@@ -397,9 +401,9 @@ class MainWindow(qtw.QWidget):
         self.image.setPixmap(scaled_pixmap)
         self.image.setAlignment(qtc.Qt.AlignRight)
 
-        self.presupuestos_pendientes = qtw.QComboBox()
+        self.presupuestos_pendientes = qtw.QComboBox(objectName='trabajos_pendientes')
         self.clientes_combo = qtw.QComboBox()
-        self.trabajos_todos = qtw.QComboBox()
+        self.trabajos_todos = qtw.QComboBox(objectName='combo_trabajos_todos')
         self.trabajos_año = qtw.QComboBox()
 
         self.cliente = qtw.QLineEdit(objectName='cliente')
@@ -627,13 +631,16 @@ class MainWindow(qtw.QWidget):
         ### Clientes
         start1 = time.perf_counter()
 
+        # self.model = qtc.QStringListModel()
         self.completer_trabajos = qtw.QCompleter(
             self.presupuesto.loc[:, 'Motivo'], self
         )
+        # self.completer_trabajos.setModel(self.model)
+        # self.model.setStringList(self.presupuesto.loc[:, 'Motivo'].values)
         self.completer_trabajos.setCaseSensitivity(qtc.Qt.CaseInsensitive)
         self.completer_trabajos.setFilterMode(qtc.Qt.MatchContains)
         self.completer_clientes = qtw.QCompleter(
-            self.presupuesto.loc[:, 'Cliente'], self
+            sorted(self.presupuesto.loc[:, 'Cliente'].unique()), self
         )
         self.completer_clientes.setCaseSensitivity(qtc.Qt.CaseInsensitive)
         self.completer_clientes.setFilterMode(qtc.Qt.MatchContains)
@@ -793,7 +800,7 @@ class MainWindow(qtw.QWidget):
         self.total8.setEnabled(False)
 
 
-        ####Signals####
+        ####Conexiones####
         self.combo1.activated.connect(lambda: self.complete_products(string=self.combo1.currentText(),
                                                                      idx=self.grid2.indexOf(self.combo1)))
         self.combo2.activated.connect(lambda: self.complete_products(string=self.combo2.currentText(),
@@ -860,7 +867,8 @@ class MainWindow(qtw.QWidget):
 
         # Motivo
         self.trabajos_todos.activated.connect(lambda: self.complete_from_work(
-            string=self.trabajos_todos.currentText(), client=self.clientes_combo.currentText()
+            string=self.trabajos_todos.currentText(), client=self.clientes_combo.currentText(),
+            index=self.completer_trabajos.currentIndex().row()
         ))
         self.presupuestos_pendientes.activated.connect(
             lambda: self.complete_from_work(
@@ -872,6 +880,9 @@ class MainWindow(qtw.QWidget):
                 string=self.clientes_combo.currentText()
             )
         )
+        self.clientes_combo.textActivated.connect(
+            self.restaurar_lista_trabajos)
+
         # stylesheet
 
         self.completer_productos.popup().setStyleSheet("color: white; font-size: 13pt;"
@@ -1018,7 +1029,17 @@ class MainWindow(qtw.QWidget):
             except Exception as e:
                 print(e)
 
-    # Pendiente !
+    @qtc.pyqtSlot()
+    def restaurar_lista_trabajos(self):
+        try:
+            if not self.sender().currentText():
+                self.trabajos_todos.clear()
+                self.trabajos_todos.addItem(' ')
+                self.trabajos_todos.addItems(
+                    sorted(self.presupuesto.loc[:, 'Motivo']))
+        except Exception as e:
+            print(str(e))
+
     def complete_from_cliente(self, string):
         if len(string) != 0:
             try:
@@ -1031,19 +1052,21 @@ class MainWindow(qtw.QWidget):
                 self.status_bar.showMessage(str(e), 10000)
         else:
             self.trabajos_todos.clear()
+            self.trabajos_todos.addItem('')
             self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
             self.borrar_formulario()
 
-    def complete_from_work(self, string, client):
+    def complete_from_work(self, string, client='', index=0):
         if string and not client:
-            try:
+            if self.sender().objectName() == 'trabajos_pendientes':
                 self.borrar_formulario()
+            try:
+                # self.borrar_formulario()
                 subset = self.presupuesto[
                     self.presupuesto['Motivo'] == string
                 ]
-                if subset.size != 0:
-                    if subset.size == 1:
-                        print('subset size:', subset.size)
+                if len(subset) != 0:
+                    if len(subset) == 1:
                         self.fecha_rec.setText(subset['F_Recepción'].values[0])
                         self.fecha_entrega.setText(subset['F_Entrega'].values[0])
                         self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
@@ -1056,8 +1079,12 @@ class MainWindow(qtw.QWidget):
                         self.pp_cm.setText(str(subset['ctpp'].values[0]))
                         self.total.setText(str(subset['Total_General'].values[0]))
                         self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
+                    else:
 
+                        print(self.completer_trabajos.completionModel().index(index, 0).data())
+                        print(self.completer_trabajos.currentIndex().row())
 
+                        self.borrar_formulario()
                     self.completar_precios(subset)
                     self.completar_productos_from_work(subset)
                     self.completar_otros_items(subset)
@@ -1066,8 +1093,8 @@ class MainWindow(qtw.QWidget):
                 print(e)
         elif string and client:
             self.borrar_formulario()
+            self.clientes_combo.setCurrentText(client)
             subset = self.presupuesto[(self.presupuesto['Motivo'] == string) & (self.presupuesto['Cliente'] == client)]
-            print('subset size:', subset.size)
             self.fecha_rec.setText(subset['F_Recepción'].values[0])
             self.fecha_entrega.setText(subset['F_Entrega'].values[0])
             self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
@@ -1243,34 +1270,44 @@ class MainWindow(qtw.QWidget):
                 (self.presupuesto['Cliente'] == cliente) & (self.presupuesto['Motivo'] == motivo)].index[0]
             #print(index)
             # self.presupuesto.drop(index, axis='index', inplace=True)
-            self.presupuesto.iloc[index, -1] = 1
-            self.presupuesto.iloc[index, 3] = fecha
-            # Borrar esta línea luego de implementar guardado
-            self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
-            self.status_bar.showMessage(
-                f'Trabajo de {cliente} con motivo: "{motivo}" completado el día {fecha}',
-                15000)
-            self.presupuestos_pendientes.removeItem(combobox_index)
-            self.borrar_formulario()
+            completion_state = self.presupuesto.iloc[index, -1]
+            if completion_state == 0:
+                self.presupuesto.iloc[index, -1] = 1
+                self.presupuesto.iloc[index, 3] = fecha
+                # Borrar esta línea luego de implementar guardado
+                self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+                self.status_bar.showMessage(
+                    f'Trabajo de {cliente} con motivo: "{motivo}" completado el día {fecha}',
+                    15000)
+                self.presupuestos_pendientes.removeItem(combobox_index)
+                self.borrar_formulario()
 
         #print('Done')
 
     @qtc.pyqtSlot()
     def borrar_formulario(self):
-        for i in range(self.grid1.count()):
-            item = self.grid1.itemAt(i).widget()
-            if isinstance(item, qtw.QComboBox):
-                item.clearEditText()
-        for i in range(self.grid2.count()):
-            item = self.grid2.itemAt(i).widget()
-            if isinstance(item, qtw.QComboBox):
-                item.clearEditText()
-            elif isinstance(item, qtw.QLineEdit) or isinstance(item, qtw.QTextEdit):
-                item.clear()
-        self.med_final_cm_ancho.setText('0')
-        self.med_final_cm_alto.setText('0')
-        self.cantidad.setText('1')
-        self.display_total()
+        try:
+            for i in range(self.grid1.count()):
+                item = self.grid1.itemAt(i).widget()
+                if isinstance(item, qtw.QComboBox):
+                    item.clearEditText()
+            for i in range(self.grid2.count()):
+                item = self.grid2.itemAt(i).widget()
+                if isinstance(item, qtw.QComboBox):
+                    item.clearEditText()
+                elif isinstance(item, qtw.QLineEdit) or isinstance(item, qtw.QTextEdit):
+                    item.clear()
+            self.med_final_cm_ancho.setText('0')
+            self.med_final_cm_alto.setText('0')
+            self.cantidad.setText('1')
+            self.display_total()
+            if isinstance(self.sender(), qtw.QPushButton):
+                # restore original list
+                self.trabajos_todos.clear()
+                self.trabajos_todos.addItem('')
+                self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
+        except Exception as e:
+            print('e')
         #self.display_p_unitario()
 
     def borrar_presupuesto_cargado(self):
@@ -1402,7 +1439,6 @@ class MainWindow(qtw.QWidget):
     def abrir_tabla_presupuestos(self):
         self.tabla = Tabla('database/DB/presupuestos_limpio.csv')
         self.tabla.exec_()
-
 
     def abrir_tabla_productos(self):
         self.tabla = Tabla('database/DB/productos.csv')
