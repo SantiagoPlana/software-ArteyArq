@@ -6,6 +6,7 @@ import pandas as pd
 import csv
 import time
 import traceback
+from pdf import generate
 
 start = time.perf_counter()
 
@@ -130,6 +131,7 @@ class CsvTableModel(qtc.QAbstractTableModel):
         # commented out code below to fix issue with additional lines being added after saving csv file from the window.
         # with open(self.filename, 'w', encoding='utf-8') as fh:
         with open(self.filename, 'w', newline='', encoding='utf-8') as fh:
+            print(fh)
             writer = csv.writer(fh)
             writer.writerow(self._headers)
             writer.writerows(self._data)
@@ -259,8 +261,11 @@ class Tabla(qtw.QDialog):
         selected_proxy = [self.filter_proxy_model.mapToSource(idx) for idx in selected]
         print(selected_proxy)
         if selected:
-            for row in range(num_rows):
-                self.model.removeRows(selected_proxy[row].row(), num_rows, None)
+            try:
+                for row in range(num_rows):
+                    self.model.removeRows(selected_proxy[row].row(), num_rows, None)
+            except Exception as e:
+                print(str(e))
 
     def sumar_porcentaje_dialog(self):
         """Input dialog para ingresar porcentaje"""
@@ -378,10 +383,11 @@ class MainWindow(qtw.QWidget):
         # self.showFullScreen()
 
         # self.center()
-        try:
-            self.resize(self.settings.value('window size'))
-        except:
-            pass
+        #try:
+        #    self.resize(self.settings.value('window size'))
+        #except:
+        self.setFixedWidth(1600)
+        #self.resize(900, 700)
 
         self.menu = qtw.QMenuBar(objectName='menu')
         # self.menu.addAction('Guardar cambios')
@@ -622,7 +628,7 @@ class MainWindow(qtw.QWidget):
         main_layout.addLayout(self.grid2)
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 50))
         main_layout.addWidget(self.status_bar)
-        self.status_bar.showMessage('HEEEEEEEEEEEY', 20000)
+        #self.status_bar.showMessage('HEEEEEEEEEEEY', 20000)
 
         end = time.perf_counter()
         total = end - start
@@ -842,7 +848,8 @@ class MainWindow(qtw.QWidget):
         # Confirmar trabajo
         # self.btn_pdf.clicked.connect(self.cargar_venta)
         self.btn_pdf.clicked.connect(lambda: self.message(
-            string='Presione OK si desea cargar como venta.',
+            string='Presione OK para cargar como venta. \n'
+                   'Presione Guardar para guardar detalle de presupuesto',
             method=lambda: self.cargar_venta(),
             windowTitle='Confirmación',
             icon=qtw.QMessageBox.Question))
@@ -924,6 +931,11 @@ class MainWindow(qtw.QWidget):
         # Show
         self.show()
 
+    # Reporte pdf
+    def reporte_pdf(self):
+        pedido = self.preparar_dic_datos()
+        generate(pedido)
+
     # Settings
     def closeEvent(self, event):
         """Método que se dispara al cerrar el programa."""
@@ -995,8 +1007,8 @@ class MainWindow(qtw.QWidget):
             print('otro método')
         else:
             msg.close()
-    # Form methods
 
+    # Form methods
     @qtc.pyqtSlot()
     def complete_products(self, string, idx):
         subset = self.productos[
@@ -1186,8 +1198,7 @@ class MainWindow(qtw.QWidget):
         # print('Running other function')
         self.cargar_venta()
 
-    def cargar_venta(self):
-        """Cargar toda la información al CSV de presupuestos"""
+    def preparar_dic_datos(self):
         cto1 = self.med_orig_cm_ancho.text().replace(',', '.')
         cto2 = self.med_orig_cm_alto.text().replace(',', '.')
         ctpp = self.pp_cm.text().replace(',', '.')
@@ -1222,21 +1233,33 @@ class MainWindow(qtw.QWidget):
                     pedido[col] = 'S/D'
             except Exception as e:
                 print(col, e)
+        return pedido
 
-        # print(pedido)
+    def cargar_venta(self):
+        """Cargar toda la información al CSV de presupuestos"""
+
+        pedido = self.preparar_dic_datos()
+        print(pedido)
         count = 1
         col1 = 1  # columna de nombre
         col2 = 7   # columna de precios
+        item_list = []
         for row in range(8, 16):
             producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
             # print(producto)
             if len(producto) > 0:
                 precio = self.grid2.itemAtPosition(row, col2).widget().text()
                 # get item id
+                item_name = self.productos[
+                    self.productos[
+                        'DenominaciónCompleta'] == producto][
+                    'DenominaciónCompleta'].values[0]
                 item_id = self.productos[
-                    self.productos['DenominaciónCompleta'] == producto]['Contador'].values[0]
+                    self.productos[
+                        'DenominaciónCompleta'] == producto]['Contador'].values[0]
                 pedido['CCProducto' + str(count)] = item_id
                 pedido['ctpreciouni' + str(count)] = float(precio)
+                item_list.append(item_name)
                 count += 1
             else:
                 item_id = 0
@@ -1256,6 +1279,14 @@ class MainWindow(qtw.QWidget):
         self.trabajos_todos.addItem(pedido['Motivo'])
         self.clientes_combo.addItem(pedido['Cliente'])
         self.presupuestos_pendientes.addItem(pedido['Motivo'])
+        pedido['Lista_Items'] = item_list
+        pedido['sup'] = self.sup_m2.text() or ''
+        pedido['per'] = self.per_ml.text() or ''
+        pedido['med_alto_final'] = self.med_final_cm_alto.text() or ''
+        pedido['med_ancho_final'] = self.med_final_cm_ancho.text() or ''
+        # generar pdf
+        # print(pedido.keys())
+        generate(pedido)
 
     @qtc.pyqtSlot()
     def completar_trabajo(self):

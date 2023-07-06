@@ -6,6 +6,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+import datetime
 
 
 # test1 = {'Cliente': 'Juan Román Riquelme',
@@ -30,9 +31,11 @@ p_style = ParagraphStyle('motivo', fontSize=15, leading=20, wordWrap='CJK', font
 
 def generate(dic, path=''):
     print('running generate')
+    fecha = datetime.datetime.now().date()
+    fecha = fecha.strftime('%d-%m-%Y')
     try:
         rn = random.randint(1, 300)
-        name = f'{dic["Cliente"].replace(" ", "-")}--{rn}.pdf'
+        name = f'{dic["Cliente"].replace(" ", "-")}-{fecha}--{rn}.pdf'
         # name = 'test.pdf'
         canvas = Canvas(name, pagesize=A4)
         width, length = A4
@@ -44,7 +47,7 @@ def generate(dic, path=''):
         canvas.line(x1=10, y1=length - 20, x2=width - 10, y2=length - 20)
         canvas.drawString(40, length - 50, 'Presupuesto')
         canvas.setFont('Calibri Bold', 20)
-        canvas.drawString(width / 2, length - 50, 'Fecha:')
+        canvas.drawString(width / 2, length - 50, f'Fecha: {fecha}')
 
         print(dic["Cliente"], dic["Cliente"], str(dic["Cant"]))
         cliente = Paragraph(f'<b><u>Cliente</u></b>:  {dic["Cliente"]}', p_style)
@@ -71,9 +74,9 @@ def generate(dic, path=''):
         medidas = Table([[Paragraph('<b>Med. Original</b>', style=cell_style), '', '', ''],
                          ['Largo', str(dic["cto1"]), Paragraph('<b>Ancho varilla</b>', style=cell_style), str(dic["ctvar"])],
                          ['Ancho', str(dic["cto2"]), Paragraph('<b>Paspartú</b>', style=cell_style), str(dic["ctpp"])],
-                         [Paragraph('<b>Med. Final cm</b>', style=cell_style), 25,
-                          Paragraph('<b>Superficie m2</b>', style=cell_style), 0.88],
-                         ['', 30,  Paragraph('<b>Perímetro</b>', style=cell_style), 3.2]])
+                         [Paragraph('<b>Med. Final cm</b>', style=cell_style), dic['med_alto_final'],
+                          Paragraph('<b>Superficie m2</b>', style=cell_style), dic['sup']],
+                         ['', dic["med_ancho_final"],  Paragraph('<b>Perímetro</b>', style=cell_style), dic['per']]])
         print('ongoing')
         medidas._argW[1], medidas._argW[3] = 70, 70  # cell width
         medidas._argW[0], medidas._argW[2] = 150, 150  # cell width
@@ -98,8 +101,8 @@ def generate(dic, path=''):
         canvas.line(x1=10, y1=length - (500 + count), y2=length - (500 + count), x2=width - 10)
 
         p_unitario = round(sum([dic[key] for key in dic.keys() if 'ctpreciouni' in key]))
-        print(p_unitario)
-        p_total = dic['Total_General']
+        # print(p_unitario)
+        p_total = round(dic['Total_General'])
         unitario = Paragraph(f'''<b><u>Precio unitario</u></b>: {p_unitario}''', p_style)
         total = Paragraph(f''' <b><u>Total</u></b>: {p_total}  ''', p_style)
         unitario.wrap(width, (length-820, length))
