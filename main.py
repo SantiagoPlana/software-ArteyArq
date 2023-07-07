@@ -6,7 +6,7 @@ import pandas as pd
 import csv
 import time
 import traceback
-from pdf import generate
+from pdf import generate, orden_trabajo
 
 start = time.perf_counter()
 
@@ -770,6 +770,10 @@ class MainWindow(qtw.QWidget):
         self.med_final_cm_alto.setValidator(self.validator)
         self.pp_cm.setValidator(self.validator)
         self.var.setValidator(self.validator)
+        self.p_otro1.setValidator(self.validator)
+        self.p_otro2.setValidator(self.validator)
+        self.p_otro3.setValidator(self.validator)
+
 
         # Non-editable
         self.med_final_cm_ancho.setEnabled(False)
@@ -968,7 +972,7 @@ class MainWindow(qtw.QWidget):
         self.trabajos_todos.setCompleter(self.completer_trabajos)
         self.clientes_combo.setCompleter(self.completer_clientes)
         self.presupuestos_pendientes.setCompleter(self.completer_pendientes)
-        print('Set')
+        # print('Set')
         self.completer_clientes.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                       "selection-background-color: #FF9B99;"
                                                         "selection-color: solidblack;")
@@ -1004,7 +1008,8 @@ class MainWindow(qtw.QWidget):
                 self.status_bar.showMessage(str(e))
         elif ret == qtw.QMessageBox.Save:
             # método para exportar PDF / imprimir presupuesto sin guardarlo
-            print('otro método')
+            self.generar_pdf()
+
         else:
             msg.close()
 
@@ -1235,20 +1240,21 @@ class MainWindow(qtw.QWidget):
                 print(col, e)
         return pedido
 
-    def cargar_venta(self):
-        """Cargar toda la información al CSV de presupuestos"""
-
+    def generar_pdf(self):
+        """Generar un detalle de trabajo en PDF sin cargar los datos al CSV de presupuestos"""
         pedido = self.preparar_dic_datos()
-        print(pedido)
+        # print(pedido)
         count = 1
         col1 = 1  # columna de nombre
-        col2 = 7   # columna de precios
+        col2 = 7  # columna de precios
         item_list = []
         for row in range(8, 16):
             producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
+
             # print(producto)
             if len(producto) > 0:
                 precio = self.grid2.itemAtPosition(row, col2).widget().text()
+                p_unit = self.grid2.itemAtPosition(row, 6).widget().text()
                 # get item id
                 item_name = self.productos[
                     self.productos[
@@ -1258,7 +1264,8 @@ class MainWindow(qtw.QWidget):
                     self.productos[
                         'DenominaciónCompleta'] == producto]['Contador'].values[0]
                 pedido['CCProducto' + str(count)] = item_id
-                pedido['ctpreciouni' + str(count)] = float(precio)
+                pedido['ctpreciouni' + str(count)] = '%.2f' % float(precio)
+                pedido['p_unitario' + str(count)] = '%.2f' % float(p_unit)
                 item_list.append(item_name)
                 count += 1
             else:
@@ -1266,27 +1273,75 @@ class MainWindow(qtw.QWidget):
                 precio = 0
                 pedido['CCProducto' + str(count)] = item_id
                 pedido['ctpreciouni' + str(count)] = precio
+                pedido['p_unitario' + str(count)] = p_unit
                 count += 1
-            # print(count)
-        new_df = pd.DataFrame([pedido])
-        self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
-        # print('Done')
-        self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
-        # print('Saved')
-        self.completers_from_presupuesto()
-        self.status_bar.showMessage('Presupuesto cargado correctamente', 15000)
-        # adding to combo boxes
-        self.trabajos_todos.addItem(pedido['Motivo'])
-        self.clientes_combo.addItem(pedido['Cliente'])
-        self.presupuestos_pendientes.addItem(pedido['Motivo'])
         pedido['Lista_Items'] = item_list
         pedido['sup'] = self.sup_m2.text() or ''
         pedido['per'] = self.per_ml.text() or ''
         pedido['med_alto_final'] = self.med_final_cm_alto.text() or ''
         pedido['med_ancho_final'] = self.med_final_cm_ancho.text() or ''
-        # generar pdf
-        # print(pedido.keys())
         generate(pedido)
+        self.status_bar.showMessage('PDF de orden generado correctamente.', 10000)
+
+    def cargar_venta(self):
+        """Cargar toda la información al CSV de presupuestos y generar orden de trabajo en PDF"""
+        try:
+            pedido = self.preparar_dic_datos()
+            # print(pedido)
+            count = 1
+            col1 = 1  # columna de nombre
+            col2 = 7   # columna de precios
+            item_list = []
+            for row in range(8, 16):
+                producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
+
+                # print(producto)
+                if len(producto) > 0:
+                    precio = self.grid2.itemAtPosition(row, col2).widget().text()
+                    p_unit = self.grid2.itemAtPosition(row, 6).widget().text()
+                    # get item id
+                    item_name = self.productos[
+                        self.productos[
+                            'DenominaciónCompleta'] == producto][
+                        'DenominaciónCompleta'].values[0]
+                    item_id = self.productos[
+                        self.productos[
+                            'DenominaciónCompleta'] == producto]['Contador'].values[0]
+                    pedido['CCProducto' + str(count)] = item_id
+                    pedido['ctpreciouni' + str(count)] = '%.2f' % float(precio)
+                    pedido['p_unitario' + str(count)] = '%.2f' % float(p_unit)
+                    item_list.append(item_name)
+                    count += 1
+                else:
+                    item_id = 0
+                    precio = 0
+                    pedido['CCProducto' + str(count)] = item_id
+                    pedido['ctpreciouni' + str(count)] = precio
+                    pedido['p_unitario' + str(count)] = p_unit
+                    count += 1
+                # print(count)
+            new_df = pd.DataFrame([pedido])
+            self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
+            # print('Done')
+            self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+            # print('Saved')
+            self.completers_from_presupuesto()
+            self.status_bar.showMessage('Presupuesto cargado correctamente', 10000)
+            # adding to combo boxes
+            self.trabajos_todos.addItem(pedido['Motivo'])
+            self.clientes_combo.addItem(pedido['Cliente'])
+            self.presupuestos_pendientes.addItem(pedido['Motivo'])
+            pedido['Lista_Items'] = item_list
+            pedido['sup'] = self.sup_m2.text() or ''
+            pedido['per'] = self.per_ml.text() or ''
+            pedido['med_alto_final'] = self.med_final_cm_alto.text() or ''
+            pedido['med_ancho_final'] = self.med_final_cm_ancho.text() or ''
+            # generar pdf
+            # print(pedido.keys())
+            # generate(pedido)
+            orden_trabajo(pedido)
+        except Exception as e:
+            self.status_bar.showMessage(str(e))
 
     @qtc.pyqtSlot()
     def completar_trabajo(self):
