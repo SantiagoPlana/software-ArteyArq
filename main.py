@@ -936,9 +936,20 @@ class MainWindow(qtw.QWidget):
         self.show()
 
     # Reporte pdf
-    def reporte_pdf(self):
-        pedido = self.preparar_dic_datos()
-        generate(pedido)
+    def getPath(self):
+        settings = qtc.QSettings('Arte & Arquitectura', 'Gestor Arte & Arquitectura')
+        if 'PDF_Path' in settings.allKeys():
+            # generate(dic, settings.value('PDF_Path'))
+            path = settings.value('PDF_Path')
+            print(path)
+        else:
+            path = qtw.QFileDialog.getExistingDirectory(self,
+                                                        'Guardar PDF',
+                                                        qtc.QDir.currentPath(),
+                                                        qtw.QFileDialog.ShowDirsOnly |
+                                                        qtw.QFileDialog.DontResolveSymlinks)
+            settings.setValue('PDF_Path', path)
+        return path
 
     # Settings
     def closeEvent(self, event):
@@ -1280,7 +1291,8 @@ class MainWindow(qtw.QWidget):
         pedido['per'] = self.per_ml.text() or ''
         pedido['med_alto_final'] = self.med_final_cm_alto.text() or ''
         pedido['med_ancho_final'] = self.med_final_cm_ancho.text() or ''
-        generate(pedido)
+        path = self.getPath()
+        generate(pedido, path)
         self.status_bar.showMessage('PDF de orden generado correctamente.', 10000)
 
     def cargar_venta(self):
@@ -1320,10 +1332,13 @@ class MainWindow(qtw.QWidget):
                     pedido['p_unitario' + str(count)] = p_unit
                     count += 1
                 # print(count)
-            new_df = pd.DataFrame([pedido])
+
+            dict_for_df = {key: value for key, value in pedido.items() if 'p_unitario' not in key}
+            new_df = pd.DataFrame([dict_for_df])
             self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
             # print('Done')
             self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+
             # print('Saved')
             self.completers_from_presupuesto()
             self.status_bar.showMessage('Presupuesto cargado correctamente', 10000)
@@ -1339,7 +1354,8 @@ class MainWindow(qtw.QWidget):
             # generar pdf
             # print(pedido.keys())
             # generate(pedido)
-            orden_trabajo(pedido)
+            path = self.getPath()
+            orden_trabajo(pedido, path)
         except Exception as e:
             self.status_bar.showMessage(str(e))
 

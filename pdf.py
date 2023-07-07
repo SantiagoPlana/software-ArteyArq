@@ -48,7 +48,7 @@ base_doc = BaseDocTemplate(
     bottomMargin=20
 
 )
-p_style = ParagraphStyle('motivo', fontSize=15, leading=20, wordWrap='CJK', font='Calibri',
+p_style = ParagraphStyle('motivo', fontSize=13, leading=20, wordWrap='CJK', font='Calibri',
                          spaceShrinkage=0.5)
 
 
@@ -58,7 +58,7 @@ def generate(dic, path=''):
     fecha = fecha.strftime('%d-%m-%Y')
     try:
         rn = random.randint(1, 300)
-        name = f'{dic["Cliente"].replace(" ", "-")}-{fecha}--{rn}.pdf'
+        name = f'{path}/{dic["Cliente"].replace(" ", "-")}-{fecha}--{rn}.pdf'
         # name = 'test.pdf'
         canvas = Canvas(name, pagesize=A4)
         width, length = A4
@@ -88,12 +88,12 @@ def generate(dic, path=''):
 
         canvas.line(x1=10, y1=length-230, y2=length-230, x2=width-10)
 
-        t_style = TableStyle([('FONTSIZE', (0, 0), (-1, -1), 15), ('LEADING', (0, 0), (-1, -1), 25),
+        t_style = TableStyle([('FONTSIZE', (0, 0), (-1, -1), 14), ('LEADING', (0, 0), (-1, -1), 25),
                               ('INNERGRID', (0, 0), (-1, -1), 0.5, 'black'),
                               ('BOX', (0, 0), (-1, -1), 2, 'black'),
                               ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
 
-        cell_style = ParagraphStyle('celdas', fontSize=15, leading=25, wordWrap='CJK')
+        cell_style = ParagraphStyle('celdas', fontSize=13, leading=25, wordWrap='CJK')
         medidas = Table([[Paragraph('<b>Med. Original</b>', style=cell_style), '', '', ''],
                          ['Largo', str(dic["cto1"]), Paragraph('<b>Ancho varilla</b>', style=cell_style), str(dic["ctvar"])],
                          ['Ancho', str(dic["cto2"]), Paragraph('<b>Paspartú</b>', style=cell_style), str(dic["ctpp"])],
@@ -149,7 +149,7 @@ def orden_trabajo(dic, path=''):
     fecha = datetime.datetime.now().date()
     fecha = fecha.strftime('%d-%m-%Y')
     rn = random.randint(1, 300)
-    name = f'{dic["Cliente"].replace(" ", "-")}-{fecha}--{rn}.pdf'
+    name = f'{path}/OrdenTrabajo-{dic["Cliente"].replace(" ", "-")}-{fecha}--{rn}.pdf'
     paragraph_style = ParagraphStyle('style', fontSize=10, leading=11, wordWrap='CJK', font='Calibri',
                                      spaceShrinkage=0.5)
     canvas = Canvas(name, pagesize=A4)
