@@ -6,6 +6,7 @@ import pandas as pd
 import csv
 import time
 import traceback
+
 from pdf import generate, orden_trabajo
 
 start = time.perf_counter()
@@ -32,8 +33,6 @@ class Worker(qtc.QRunnable):
     @qtc.pyqtSlot()
     def run(self):
         """Inicializa la función"""
-        print('running')
-        print(self.args, self.kwargs)
         try:
             result = self.fn(
                 *self.args, **self.kwargs
@@ -131,7 +130,6 @@ class CsvTableModel(qtc.QAbstractTableModel):
         # commented out code below to fix issue with additional lines being added after saving csv file from the window.
         # with open(self.filename, 'w', encoding='utf-8') as fh:
         with open(self.filename, 'w', newline='', encoding='utf-8') as fh:
-            print(fh)
             writer = csv.writer(fh)
             writer.writerow(self._headers)
             writer.writerows(self._data)
@@ -259,7 +257,7 @@ class Tabla(qtw.QDialog):
         selected = self.table.selectedIndexes()
         num_rows = len(set(index.row() for index in selected))
         selected_proxy = [self.filter_proxy_model.mapToSource(idx) for idx in selected]
-        print(selected_proxy)
+
         if selected:
             try:
                 for row in range(num_rows):
@@ -386,8 +384,9 @@ class MainWindow(qtw.QWidget):
         #try:
         #    self.resize(self.settings.value('window size'))
         #except:
-        #self.setFixedWidth(1600)
-        self.resize(700, 500)
+        self.setFixedWidth(1600)
+        self.setFixedHeight(900)
+        # self.resize(200, 500)
 
         self.menu = qtw.QMenuBar(objectName='menu')
         # self.menu.addAction('Guardar cambios')
@@ -495,9 +494,13 @@ class MainWindow(qtw.QWidget):
         # Botones
         self.btn_borrar = qtw.QPushButton('Borrar',
                                           objectName='botonborrar')
+        self.btn_borrar.setToolTip('Limpiar todos los campos')
         self.btn_pdf = qtw.QPushButton(objectName='botonpdf')
+        self.btn_pdf.setToolTip('Generar PDF para orden de trabajo o presupuesto')
         self.eliminar_presupuesto = qtw.QPushButton('')
+        self.eliminar_presupuesto.setToolTip('Eliminar presupuesto actual de la base de datos')
         self.trabajo_completo = qtw.QPushButton(objectName='botoncompletado')
+        self.trabajo_completo.setToolTip('Marcar el trabajo actual como completado')
         completado_icon = QIcon('checkmark.ico')
         eliminar_icon = QIcon('trash-icon.ico')
         pdf_icon = QIcon('pdf.ico')
@@ -983,7 +986,6 @@ class MainWindow(qtw.QWidget):
         self.trabajos_todos.setCompleter(self.completer_trabajos)
         self.clientes_combo.setCompleter(self.completer_clientes)
         self.presupuestos_pendientes.setCompleter(self.completer_pendientes)
-        # print('Set')
         self.completer_clientes.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                       "selection-background-color: #FF9B99;"
                                                         "selection-color: solidblack;")
@@ -1016,7 +1018,7 @@ class MainWindow(qtw.QWidget):
             try:
                 method.__call__()
             except Exception as e:
-                self.status_bar.showMessage(str(e))
+                self.status_bar.showMessage(str(e), 10000)
         elif ret == qtw.QMessageBox.Save:
             # método para exportar PDF / imprimir presupuesto sin guardarlo
             self.generar_pdf()
@@ -1047,7 +1049,6 @@ class MainWindow(qtw.QWidget):
     def borrar_precios(self, idx):
         if len(self.sender().text()) == 0:
             try:
-                print(idx)
                 row, column, cols, rows = self.grid2.getItemPosition(idx)
                 self.grid2.itemAtPosition(row, 5).widget().clear()
                 self.grid2.itemAtPosition(row, 6).widget().clear()
@@ -1108,10 +1109,6 @@ class MainWindow(qtw.QWidget):
                         self.total.setText(str(subset['Total_General'].values[0]))
                         self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
                     else:
-
-                        print(self.completer_trabajos.completionModel().index(index, 0).data())
-                        print(self.completer_trabajos.currentIndex().row())
-
                         self.borrar_formulario()
                     self.completar_precios(subset)
                     self.completar_productos_from_work(subset)
@@ -1151,26 +1148,22 @@ class MainWindow(qtw.QWidget):
             if producto_id != 0:
                 item = self.productos[
                     self.productos['Contador'] == producto_id]['DenominaciónCompleta'].values[0]
-                # print(item)
                 self.grid2.itemAtPosition(item_row, 1).widget().setCurrentText(item)
                 item_row += 1
 
     def completar_precios(self, subset):
         """Esta función completa con los precios con los que se fijaron presupuestos pasados"""
         precios = [col for col in subset.columns if col.startswith('ctpreciouni')]
-        #print(precios)
+
         item_row = 8
         for col in precios:
             precio = subset.loc[:, col].values[0]
             if precio != 0:
                 try:
                     self.grid2.itemAtPosition(item_row, 6).widget().setText(str(precio))
-                    #print(precio, 'Done')
                     item_row += 1
                 except Exception as e:
                     print(e)
-                # print('Done', item_row, precio)
-        #print('...')
 
     def completar_otros_items(self, subset):
         otros = subset[['ctotros', 'ctotros1', 'ctotros2']]
@@ -1197,21 +1190,15 @@ class MainWindow(qtw.QWidget):
             if isinstance(item, qtw.QLineEdit):
                 if item.objectName().startswith('total') and len(item.text()) == 0:
                     item.setText('0')
-                    print(item.objectName())
                 elif item.objectName().startswith('p_') and len(item.text()) == 0:
                     item.setText('0')
-                    print(item.objectName())
                 elif item.objectName() == 'pp' and len(item.text()) == 0:
                     item.setText('0')
-                    print(item.objectName())
                 elif item.objectName() == 'var' and len(item.text()) == 0:
                     item.setText('0')
-                    print(item.objectName())
                 else:  # lineEdits de "otros"
                     if len(item.text()) == 0 and len(item.objectName()) != 0:
                         item.setText('S/D')
-                        print(item.objectName())
-        # print('Running other function')
         self.cargar_venta()
 
     def preparar_dic_datos(self):
@@ -1241,7 +1228,6 @@ class MainWindow(qtw.QWidget):
             try:
                 pedido[col] = float(pedido[col])
             except Exception as e:
-                print(col, e)
                 pedido[col] = 0
         for col in text_cols:
             try:
@@ -1255,7 +1241,6 @@ class MainWindow(qtw.QWidget):
         """Generar un detalle de trabajo en PDF sin cargar los datos al CSV de presupuestos"""
         try:
             pedido = self.preparar_dic_datos()
-            # print(pedido)
             count = 1
             col1 = 1  # columna de nombre
             col2 = 7  # columna de precios
@@ -1263,7 +1248,6 @@ class MainWindow(qtw.QWidget):
             for row in range(8, 16):
                 producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
 
-                # print(producto)
                 if len(producto) > 0:
                     precio = self.grid2.itemAtPosition(row, col2).widget().text()
                     p_unit = self.grid2.itemAtPosition(row, 6).widget().text()
@@ -1313,7 +1297,6 @@ class MainWindow(qtw.QWidget):
         """Cargar toda la información al CSV de presupuestos y generar orden de trabajo en PDF"""
         try:
             pedido = self.preparar_dic_datos()
-            # print(pedido)
             count = 1
             col1 = 1  # columna de nombre
             col2 = 7   # columna de precios
@@ -1321,7 +1304,6 @@ class MainWindow(qtw.QWidget):
             for row in range(8, 16):
                 producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
 
-                # print(producto)
                 if len(producto) > 0:
                     precio = self.grid2.itemAtPosition(row, col2).widget().text()
                     p_unit = self.grid2.itemAtPosition(row, 6).widget().text()
@@ -1345,15 +1327,13 @@ class MainWindow(qtw.QWidget):
                     pedido['ctpreciouni' + str(count)] = precio
                     pedido['p_unitario' + str(count)] = p_unit
                     count += 1
-                # print(count)
+
 
             dict_for_df = {key: value for key, value in pedido.items() if 'p_unitario' not in key}
             new_df = pd.DataFrame([dict_for_df])
             self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
-            # print('Done')
             self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
 
-            # print('Saved')
             self.completers_from_presupuesto()
             self.status_bar.showMessage('Presupuesto cargado correctamente', 10000)
             # adding to combo boxes
@@ -1386,21 +1366,19 @@ class MainWindow(qtw.QWidget):
 
     @qtc.pyqtSlot()
     def completar_trabajo(self):
-        print('function')
         try:
             combobox_index = self.presupuestos_pendientes.currentIndex()
             cliente = self.cliente.text()
             motivo = self.motivo.toPlainText()
-            # print(cliente, motivo)
+
             if len(cliente) > 0 and len(motivo) > 0:
                 fecha = qtc.QDateTime.currentDateTime().toString('dd/MM/yyyy')
                 index = self.presupuesto[
                     (self.presupuesto['Cliente'] == cliente) & (self.presupuesto['Motivo'] == motivo)].index[0]
-                #print(index)
+
                 # self.presupuesto.drop(index, axis='index', inplace=True)
                 completion_state = self.presupuesto.iloc[index, -1]
                 if completion_state == 0:
-                    print('completion state 0')
                     self.presupuesto.iloc[index, -1] = 1
                     self.presupuesto.iloc[index, 3] = fecha
                     # Borrar esta línea luego de implementar guardado
@@ -1412,8 +1390,6 @@ class MainWindow(qtw.QWidget):
                     self.borrar_formulario()
         except Exception as e:
             pass
-
-        #print('Done')
 
     @qtc.pyqtSlot()
     def borrar_formulario(self):
@@ -1438,17 +1414,15 @@ class MainWindow(qtw.QWidget):
                 self.trabajos_todos.addItem('')
                 self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
         except Exception as e:
-            print('e')
+            pass
         #self.display_p_unitario()
 
     def borrar_presupuesto_cargado(self):
         cliente = self.cliente.text()
         motivo = self.motivo.toPlainText()
-        # print(cliente, motivo)
         if len(cliente) > 0 and len(motivo) > 0:
             index = self.presupuesto[
                 (self.presupuesto['Cliente'] == cliente) & (self.presupuesto['Motivo'] == motivo)].index[0]
-            print(index)
             msg = qtw.QMessageBox()
             msg.setText(
                 f'Está seguro de que desea borrar el trabajo de {cliente} con motivo: {motivo}?')
@@ -1498,7 +1472,6 @@ class MainWindow(qtw.QWidget):
 
     def calculo_total(self, ancho, alto):
         """Calcula el total unitario para cada item"""
-        # print(ancho, alto)
         col = 6
         p_total = 0
         # si ya hay items elegidos:
@@ -1508,7 +1481,6 @@ class MainWindow(qtw.QWidget):
                 # agarrar identificador de item y hacer cálculo según tipo en (row, 0)
                 # varilla - m; vidrio, espejo, chapadur y  pp - sup.; pintura y patina - m y sup.
                 item_id = self.grid2.itemAtPosition(row, 1).widget().lineEdit().text()[-1]
-                # print('ID: ' + item_id)
                 if item_id == 'S':
                     if len(self.sup_m2.text()) != 0:
                         p_total = float(widget.text()) * float(self.sup_m2.text())
@@ -1662,5 +1634,5 @@ if __name__ == '__main__':
     mw = MainWindow()
     end = time.perf_counter()
     total = end - start
-    # print(f'Total: {total}')
+
     sys.exit(app.exec())

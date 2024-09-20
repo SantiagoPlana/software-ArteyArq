@@ -53,7 +53,7 @@ p_style = ParagraphStyle('motivo', fontSize=13, leading=20, wordWrap='CJK', font
 
 
 def generate(dic, path=''):
-    print('running generate')
+
     fecha = datetime.datetime.now().date()
     fecha = fecha.strftime('%d-%m-%Y')
     try:
@@ -62,7 +62,7 @@ def generate(dic, path=''):
         # name = 'test.pdf'
         canvas = Canvas(name, pagesize=A4)
         width, length = A4
-        print(width, length)
+
 
         canvas.setFont('Calibri Bold', 25)
 
@@ -72,11 +72,11 @@ def generate(dic, path=''):
         canvas.setFont('Calibri Bold', 20)
         canvas.drawString(width / 2, length - 50, f'Fecha: {fecha}')
 
-        print(dic["Cliente"], dic["Cliente"], str(dic["Cant"]))
         cliente = Paragraph(f'<b><u>Cliente</u></b>:  {dic["Cliente"]}', p_style)
         motivo = Paragraph(f'<b><u>Motivo</u></b>: {dic["Motivo"]}', p_style)
         cantidad = Paragraph(f'<b><u>Cantidad</u></b>: {str(int(dic["Cant"]))}', p_style)
-        print('fase 2')
+
+        # Fase 2
         #motivo.wrapOn(canvas, 400, 20)
         motivo.wrap(width-50, length)
         cliente.wrap(width-50, length)
@@ -100,7 +100,6 @@ def generate(dic, path=''):
                          [Paragraph('<b>Med. Final cm</b>', style=cell_style), dic['med_alto_final'],
                           Paragraph('<b>Superficie m2</b>', style=cell_style), dic['sup']],
                          ['', dic["med_ancho_final"],  Paragraph('<b>Perímetro</b>', style=cell_style), dic['per']]])
-        print('ongoing')
         medidas._argW[1], medidas._argW[3] = 70, 70  # cell width
         medidas._argW[0], medidas._argW[2] = 150, 150  # cell width
         medidas.setStyle(t_style)
@@ -109,10 +108,9 @@ def generate(dic, path=''):
 
         canvas.line(x1=10, y1=length - 420, y2=length - 420, x2=width - 10)
         canvas.drawString(text='Productos: ', x=40, y=length-450)
-        # productos = [dic[key] for key in dic.keys() if 'CCProducto' in key]
-        # print(productos)
+
         productos = dic['Lista_Items']
-        print(productos)
+
         count = 0
         for producto in productos:
             prod_string = Paragraph(f'<bullet>&bull</bullet>{producto}', style=p_style)
@@ -124,7 +122,6 @@ def generate(dic, path=''):
         canvas.line(x1=10, y1=length - (500 + count), y2=length - (500 + count), x2=width - 10)
 
         p_unitario = '%.2f' % sum([float(dic[key]) for key in dic.keys() if 'ctpreciouni' in key])
-        # print(p_unitario)
         p_total = '%.2f' % dic['Total_General']
         unitario = Paragraph(f'''<b><u>Precio unitario</u></b>: {p_unitario}''', p_style)
         total = Paragraph(f''' <b><u>Total</u></b>: {p_total}  ''', p_style)
@@ -193,7 +190,7 @@ def orden_trabajo(dic, path=''):
 
     canvas.line(x1=60, y1=length - 170, x2=width - 60, y2=length - 170)
 
-    # print(productos)
+
     canvas.setFont('Calibri Bold', 12)
     canvas.drawString(x=100, y=length-185, text='Nombre de Producto')
     canvas.drawString(x=360, y=length-185, text='P. Unitario')
@@ -206,7 +203,7 @@ def orden_trabajo(dic, path=''):
     count = 0
     paragraph_style = ParagraphStyle('style', fontSize=10, leading=10, wordWrap='CJK', font='Calibri',
                                      spaceShrinkage=0.5)
-    print(len(productos), len(lst_unitario), len(lst_relativo))
+
     for producto in productos:
         prod_string = Paragraph(f'{producto}', style=paragraph_style)
         prod_string.wrap(305, length)
@@ -223,7 +220,7 @@ def orden_trabajo(dic, path=''):
         p_re_par = Paragraph(f'<b>{p_re}</b>', style=paragraph_style)
         p_re_par.wrap(width, length)
         p_re_par.drawOn(canvas, 450, length - (210 + count))
-        print(index)
+
         count += 20
 
     otros = [dic[o] for o in dic.keys() if 'ctotros' in o]
@@ -269,7 +266,7 @@ def orden_trabajo(dic, path=''):
     # image = Image('png_aya.png', width=90, height=78)
 
     canvas.save()
-    #print(width, length)
+
 
 
 if __name__ == '__main__':
