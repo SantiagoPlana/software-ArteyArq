@@ -82,16 +82,16 @@ class CargarStock(qtw.QDialog):
 
         self.grid.addWidget(qtw.QLabel("IdCategoría"), 1, 0)
         self.grid.addWidget(self.idcategoria, 2, 0)
-        self.grid.addWidget(qtw.QLabel("IdProducto"), 3, 0)
-        self.grid.addWidget(self.idproducto, 4, 0)
-        self.grid.addWidget(qtw.QLabel('Nombre Producto'), 5, 0)
-        self.grid.addWidget(self.nombreproducto, 6, 0)
-        self.grid.addWidget(qtw.QLabel('Medida'), 7, 0)
-        self.grid.addWidget(self.medida, 8, 0)
-        self.grid.addWidget(qtw.QLabel('Precio Unitario'), 9, 0)
-        self.grid.addWidget(self.precio, 10, 0)
-        self.grid.addWidget(self.btn_cargar, 11, 0)
-        self.grid.addWidget(self.btn_cancelar, 11, 1)
+        self.grid.addWidget(qtw.QLabel("IdProducto"), 1, 1)
+        self.grid.addWidget(self.idproducto, 2, 1)
+        self.grid.addWidget(qtw.QLabel('Nombre Producto'), 3, 0)
+        self.grid.addWidget(self.nombreproducto, 4, 0)
+        self.grid.addWidget(qtw.QLabel('Medida'), 3, 1)
+        self.grid.addWidget(self.medida, 4, 1)
+        self.grid.addWidget(qtw.QLabel('Precio Unitario'), 5, 0)
+        self.grid.addWidget(self.precio, 6, 0)
+        self.grid.addWidget(self.btn_cargar, 7, 0)
+        self.grid.addWidget(self.btn_cancelar, 7, 1)
 
 
         self.onlyInt = QDoubleValidator()
@@ -288,7 +288,6 @@ class CsvTableModel(qtc.QAbstractTableModel):
             writer = csv.writer(fh)
             writer.writerow(self._headers)
             writer.writerows(self._data)
-
 
 class Tabla(qtw.QDialog):
 
@@ -517,13 +516,12 @@ class Tabla(qtw.QDialog):
             print(e)
         msg.exec_()
 
-
 class MainWindow(qtw.QWidget):
 
     settings = qtc.QSettings('Arte & Arquitectura', 'Gestor Arte & Arquitectura')
     start = time.perf_counter()
     presupuesto = pd.read_csv('database/DB/presupuestos_limpio.csv', sep=',')
-    productos = pd.read_csv('database/DB/productos.csv', sep=',')
+    # productos = pd.read_csv('database/DB/productos.csv', sep=',')
     end = time.perf_counter()
     print(end - start)
 
@@ -533,6 +531,9 @@ class MainWindow(qtw.QWidget):
         start = time.perf_counter()
         self.setWindowTitle('Arte & Arquitectura')
         self.setWindowIcon(QIcon('png_aya.ico'))
+
+        self.productos = None
+        self.cargar_data_productos()
         # self.showFullScreen()
 
         # self.center()
@@ -550,7 +551,6 @@ class MainWindow(qtw.QWidget):
         self.menu.addAction('Cargar producto nuevo', self.cargar_producto)
 
         self.status_bar = qtw.QStatusBar()
-
         self.threadpool = qtc.QThreadPool()
 
         self.title = qtw.QLabel('Presupuesto', objectName='titulo')
@@ -599,6 +599,7 @@ class MainWindow(qtw.QWidget):
 
         self.combo_boxes = [self.combo1, self.combo2, self.combo3, self.combo4, self.combo5, self.combo6, self.combo7,
                        self.combo8]
+        # Cargar los items a las comboboxes, luego los completers y luego el stylesheet
         self.setup_comboboxes()
         self.style_sheet_completers()
 
@@ -676,123 +677,112 @@ class MainWindow(qtw.QWidget):
         box1 = qtw.QGroupBox(' ')
         self.setLayout(main_layout)
 
-        # main_layout.addWidget(self.menu)
         main_layout.setMenuBar(self.menu)
-        # main_layout.addWidget(self.bar)
+
+        # Adding grid1
         main_layout.addLayout(self.grid1)
-        self.grid1.addWidget(self.title, 0, 0, 1, 2)
-        self.grid1.addWidget(self.image, 0, 3, 1, 2)
+        self._add_to_grid(self.grid1, [
+            (self.title, 0, 0, 1, 2),
+            (self.image, 0, 3, 1, 2),
+            (qtw.QSpacerItem(10, 20), 1, 0),
+            (qtw.QLabel('Presupuestos pendientes'), 2, 0),
+            (self.presupuestos_pendientes, 2, 1),
+            (qtw.QLabel('Clientes'), 3, 0),
+            (self.clientes_combo, 3, 1),
+            (qtw.QLabel('Trabajos (todos)'), 2, 3),
+            (self.trabajos_todos, 2, 4),
+            (qtw.QLabel('Trabajos (este año)'), 3, 3),
+            (self.trabajos_año, 3, 4),
+        ])
 
-        self.grid1.addItem(qtw.QSpacerItem(10, 20), 1, 0)
-        self.grid1.addWidget(qtw.QLabel('Presupuestos pendientes'), 2, 0)
-        self.grid1.addWidget(self.presupuestos_pendientes, 2, 1)
-        self.grid1.addWidget(qtw.QLabel('Clientes'), 3, 0)
-        self.grid1.addWidget(self.clientes_combo, 3, 1)
-        self.grid1.addWidget(qtw.QLabel('Trabajos (todos)'), 2, 3)
-        self.grid1.addWidget(self.trabajos_todos, 2, 4)
-        self.grid1.addWidget(qtw.QLabel('Trabajos (este año)'), 3, 3)
-        self.grid1.addWidget(self.trabajos_año, 3, 4)
-
-        # main_layout.addLayout(qtw.QSpacerItem(1, 1), 4, 1, 1, 6)
-        self.grid2.addWidget(qtw.QLabel('Cliente'), 1, 1)
-        self.grid2.addWidget(self.cliente, 1, 2, 1, 2)
-        self.grid2.addWidget(qtw.QLabel('Motivo'), 2, 1)
-        self.grid2.addWidget(self.motivo, 2, 2, 2, 2)
-        self.grid2.addWidget(qtw.QLabel('Cant.'), 1, 4)
-        self.grid2.addWidget(self.cantidad, 2, 4, 1, 1)
-
-        # Fechas
-        self.grid2.addItem(qtw.QSpacerItem(10, 20), 3, 1)
-        self.grid2.addWidget(qtw.QLabel('Fecha Recepción'), 4, 1)
-        self.grid2.addWidget(self.fecha_rec, 4, 2)
-        self.grid2.addWidget(qtw.QLabel('Fecha Entrega'), 5, 1)
-        self.grid2.addWidget(self.fecha_entrega, 5, 2)
-        self.grid2.addWidget(qtw.QLabel('Fecha Realización'), 4, 3)
-        self.grid2.addWidget(self.fecha_realizacion, 5, 3)
-
-        # Medidas
-        self.grid2.addWidget(qtw.QLabel('Med. Orig. cm.'), 1, 6, 2, 1)
-        self.grid2.addWidget(self.med_orig_cm_ancho, 1, 7)
-        self.grid2.addWidget(self.med_orig_cm_alto, 2, 7)
-
-        self.grid2.addWidget(qtw.QLabel('pp. cm'), 1, 8)
-        self.grid2.addWidget(self.pp_cm, 1, 9)
-        self.grid2.addWidget(qtw.QLabel('var.'), 2, 8)
-        self.grid2.addWidget(self.var, 2, 9)
-
-        self.grid2.addWidget(qtw.QLabel('Med. Final cm.'), 4, 6, 2, 1)
-        self.grid2.addWidget(self.med_final_cm_ancho, 4, 7)
-        self.grid2.addWidget(self.med_final_cm_alto, 5, 7)
-
-        self.grid2.addWidget(qtw.QLabel('Sup. m2:'), 4, 8)
-        self.grid2.addWidget(self.sup_m2, 4, 9)
-        self.grid2.addWidget(qtw.QLabel('Per. ml:'), 5, 8)
-        self.grid2.addWidget(self.per_ml, 5, 9)
-        # Carga de producto
-        self.grid2.addItem(qtw.QSpacerItem(10, 20), 6, 1)
-        # box1.setLayout(grid1)
-        self.grid2.addWidget(self.label_nombre, 7, 1)
-        self.grid2.addWidget(self.combo1, 8, 1, 1, 4)
-        self.grid2.addWidget(self.combo2, 9, 1, 1, 4)
-        self.grid2.addWidget(self.combo3, 10, 1, 1, 4)
-        self.grid2.addWidget(self.combo4, 11, 1, 1, 4)
-        self.grid2.addWidget(self.combo5, 12, 1, 1, 4)
-        self.grid2.addWidget(self.combo6, 13, 1, 1, 4)
-        self.grid2.addWidget(self.combo7, 14, 1, 1, 4)
-        self.grid2.addWidget(self.combo8, 15, 1, 1, 4)
-        # Stock
-        self.grid2.addWidget(self.label_stock, 7, 5)
-        self.grid2.addWidget(self.stock1, 8, 5)
-        self.grid2.addWidget(self.stock2, 9, 5)
-        self.grid2.addWidget(self.stock3, 10, 5)
-        self.grid2.addWidget(self.stock4, 11, 5)
-        self.grid2.addWidget(self.stock5, 12, 5)
-        self.grid2.addWidget(self.stock6, 13, 5)
-        self.grid2.addWidget(self.stock7, 14, 5)
-        self.grid2.addWidget(self.stock8, 15, 5)
-        # P. Unitario
-        self.grid2.addWidget(self.label_p_unitario, 7, 6)
-        self.grid2.addWidget(self.punitario1, 8, 6)
-        self.grid2.addWidget(self.punitario2, 9, 6)
-        self.grid2.addWidget(self.punitario3, 10, 6)
-        self.grid2.addWidget(self.punitario4, 11, 6)
-        self.grid2.addWidget(self.punitario5, 12, 6)
-        self.grid2.addWidget(self.punitario6, 13, 6)
-        self.grid2.addWidget(self.punitario7, 14, 6)
-        self.grid2.addWidget(self.punitario8, 15, 6)
-        # Total
-        self.grid2.addWidget(self.label_total, 7, 7)
-        self.grid2.addWidget(self.total1, 8, 7)
-        self.grid2.addWidget(self.total2, 9, 7)
-        self.grid2.addWidget(self.total3, 10, 7)
-        self.grid2.addWidget(self.total4, 11, 7)
-        self.grid2.addWidget(self.total5, 12, 7)
-        self.grid2.addWidget(self.total6, 13, 7)
-        self.grid2.addWidget(self.total7, 14, 7)
-        self.grid2.addWidget(self.total8, 15, 7)
-        # Otros
-        self.grid2.addItem(qtw.QSpacerItem(10, 20), 16, 1)
-        self.grid2.addWidget(self.otro1, 17, 1, 1, 5)
-        self.grid2.addWidget(self.otro2, 18, 1, 1, 5)
-        self.grid2.addWidget(self.otro3, 19, 1, 1, 5)
-        self.grid2.addWidget(self.p_otro1, 17, 7)
-        self.grid2.addWidget(self.p_otro2, 18, 7)
-        self.grid2.addWidget(self.p_otro3, 19, 7)
-
-        self.grid2.addWidget(self.label_p_unitario2, 7, 8, 1, 2)
-        self.grid2.addWidget(self.punit, 9, 8, 2, 2)
-        self.grid2.addWidget(self.label_total2, 7, 10, 1, 2)
-        self.grid2.addWidget(self.total, 9, 10, 2, 2)
-        self.grid2.addWidget(self.btn_borrar, 11, 9, 2, 1)
-        self.grid2.addWidget(self.btn_pdf, 13, 8, 2, 1)
-        self.grid2.addWidget(self.eliminar_presupuesto, 13, 9, 2, 1)
-        self.grid2.addWidget(self.trabajo_completo, 13, 10, 2, 1)
-
-        main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
+        # Adding grid2
         main_layout.addLayout(self.grid2)
+        self._add_to_grid(self.grid2, [
+            (qtw.QLabel('Cliente'), 1, 1),
+            (self.cliente, 1, 2, 1, 2),
+            (qtw.QLabel('Motivo'), 2, 1),
+            (self.motivo, 2, 2, 2, 2),
+            (qtw.QLabel('Cant.'), 1, 4),
+            (self.cantidad, 2, 4, 1, 1),
+            (qtw.QSpacerItem(10, 20), 3, 1),
+            (qtw.QLabel('Fecha Recepción'), 4, 1),
+            (self.fecha_rec, 4, 2),
+            (qtw.QLabel('Fecha Entrega'), 5, 1),
+            (self.fecha_entrega, 5, 2),
+            (qtw.QLabel('Fecha Realización'), 4, 3),
+            (self.fecha_realizacion, 5, 3),
+            (qtw.QLabel('Med. Orig. cm.'), 1, 6, 2, 1),
+            (self.med_orig_cm_ancho, 1, 7),
+            (self.med_orig_cm_alto, 2, 7),
+            (qtw.QLabel('pp. cm'), 1, 8),
+            (self.pp_cm, 1, 9),
+            (qtw.QLabel('var.'), 2, 8),
+            (self.var, 2, 9),
+            (qtw.QLabel('Med. Final cm.'), 4, 6, 2, 1),
+            (self.med_final_cm_ancho, 4, 7),
+            (self.med_final_cm_alto, 5, 7),
+            (qtw.QLabel('Sup. m2:'), 4, 8),
+            (self.sup_m2, 4, 9),
+            (qtw.QLabel('Per. ml:'), 5, 8),
+            (self.per_ml, 5, 9),
+            (qtw.QSpacerItem(10, 20), 6, 1),
+            (self.label_nombre, 7, 1),
+            (self.combo1, 8, 1, 1, 4),
+            (self.combo2, 9, 1, 1, 4),
+            (self.combo3, 10, 1, 1, 4),
+            (self.combo4, 11, 1, 1, 4),
+            (self.combo5, 12, 1, 1, 4),
+            (self.combo6, 13, 1, 1, 4),
+            (self.combo7, 14, 1, 1, 4),
+            (self.combo8, 15, 1, 1, 4),
+            (self.label_stock, 7, 5),
+            (self.stock1, 8, 5),
+            (self.stock2, 9, 5),
+            (self.stock3, 10, 5),
+            (self.stock4, 11, 5),
+            (self.stock5, 12, 5),
+            (self.stock6, 13, 5),
+            (self.stock7, 14, 5),
+            (self.stock8, 15, 5),
+            (self.label_p_unitario, 7, 6),
+            (self.punitario1, 8, 6),
+            (self.punitario2, 9, 6),
+            (self.punitario3, 10, 6),
+            (self.punitario4, 11, 6),
+            (self.punitario5, 12, 6),
+            (self.punitario6, 13, 6),
+            (self.punitario7, 14, 6),
+            (self.punitario8, 15, 6),
+            (self.label_total, 7, 7),
+            (self.total1, 8, 7),
+            (self.total2, 9, 7),
+            (self.total3, 10, 7),
+            (self.total4, 11, 7),
+            (self.total5, 12, 7),
+            (self.total6, 13, 7),
+            (self.total7, 14, 7),
+            (self.total8, 15, 7),
+            (qtw.QSpacerItem(10, 20), 16, 1),
+            (self.otro1, 17, 1, 1, 5),
+            (self.otro2, 18, 1, 1, 5),
+            (self.otro3, 19, 1, 1, 5),
+            (self.p_otro1, 17, 7),
+            (self.p_otro2, 18, 7),
+            (self.p_otro3, 19, 7),
+            (self.label_p_unitario2, 7, 8, 1, 2),
+            (self.punit, 9, 8, 2, 2),
+            (self.label_total2, 7, 10, 1, 2),
+            (self.total, 9, 10, 2, 2),
+            (self.btn_borrar, 11, 9, 2, 1),
+            (self.btn_pdf, 13, 8, 2, 1),
+            (self.eliminar_presupuesto, 13, 9, 2, 1),
+            (self.trabajo_completo, 13, 10, 2, 1),
+        ])
+
+        # Add spacers
+        main_layout.addSpacerItem(qtw.QSpacerItem(10, 30))
         main_layout.addSpacerItem(qtw.QSpacerItem(10, 50))
         main_layout.addWidget(self.status_bar)
-        #self.status_bar.showMessage('HEEEEEEEEEEEY', 20000)
 
         end = time.perf_counter()
         total = end - start
@@ -846,8 +836,6 @@ class MainWindow(qtw.QWidget):
         self.presupuestos_pendientes.setCompleter(self.completer_pendientes)
 
         # Productos
-
-
         end1 = time.perf_counter()
         total1 = end1 - start1
         print(f'Combo-box lists and completers: {total1}')
@@ -860,7 +848,6 @@ class MainWindow(qtw.QWidget):
         self.p_otro1.setValidator(self.validator)
         self.p_otro2.setValidator(self.validator)
         self.p_otro3.setValidator(self.validator)
-
 
         # Non-editable
         self.med_final_cm_ancho.setEnabled(False)
@@ -997,6 +984,55 @@ class MainWindow(qtw.QWidget):
         # Show
         self.show()
 
+
+    def cargar_data_productos(self):
+        """
+        Load product data from a CSV file.
+        If a path is stored in settings, it uses that; otherwise,
+        it prompts the user to select a directory and saves the path.
+        """
+        # Check if the product database path is stored in settings
+        if 'DB_Productos' in self.settings.allKeys():
+            path = self.settings.value('DB_Productos')
+        else:
+            # Prompt user to select the directory for the database
+            path, _ = qtw.QFileDialog.getOpenFileName(
+                self,
+                'Abrir base de datos de productos',
+                qtc.QDir.currentPath(),
+                'CSV Files (*.csv);;All Files (*)'
+            )
+            # Save the selected path to settings
+        if path:
+            self.settings.setValue('DB_Productos', path)
+            # Attempt to load the CSV file
+            try:
+                self.productos = pd.read_csv(path, sep=',')
+            except FileNotFoundError:
+                qtw.QMessageBox.critical(self, 'Error', 'El archivo no se encontró. Verifique la ruta.')
+                return None
+            except pd.errors.EmptyDataError:
+                qtw.QMessageBox.critical(self, 'Error', 'El archivo está vacío.')
+                return None
+            except Exception as e:
+                qtw.QMessageBox.critical(self, 'Error', f'Error al cargar el archivo: {str(e)}')
+                return None
+
+            return self.productos
+
+    def _add_to_grid(self, grid, items):
+        """Helper function to add items to a grid layout."""
+        for item in items:
+            if isinstance(item[0], qtw.QSpacerItem):
+                grid.addItem(item[0], item[1], item[2])
+            else:
+                if len(item) == 3:  # widget, row, column
+                    grid.addWidget(item[0], item[1], item[2])
+                elif len(item) == 4:  # widget, row, column, rowSpan
+                    grid.addWidget(item[0], item[1], item[2], item[3])
+                elif len(item) == 5:  # widget, row, column, rowSpan, columnSpan
+                    grid.addWidget(item[0], item[1], item[2], item[3], item[4])
+
     def setup_comboboxes(self):
         # Extract valid items from the DataFrame once
         valid_items = self.productos['DenominaciónCompleta'].dropna().astype(str).unique()
@@ -1008,7 +1044,6 @@ class MainWindow(qtw.QWidget):
         for combo_box in self.combo_boxes:
             completer = self.setup_combobox(combo_box, valid_items)
             self.completers.append(completer)  # Store each completer for later use
-
 
     def setup_combobox(self, combo_box, items):
         combo_box.clear()
@@ -1089,7 +1124,6 @@ class MainWindow(qtw.QWidget):
                                                       "selection-color: solidblack;")
 
     # Display
-
     def message(self, string, method, **kwargs):
         msg = qtw.QMessageBox()
         msg.setWindowIcon(QIcon('png_aya.ico'))
@@ -1340,7 +1374,6 @@ class MainWindow(qtw.QWidget):
             item_list = []
             for row in range(8, 16):
                 producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
-
                 if len(producto) > 0:
                     precio = self.grid2.itemAtPosition(row, col2).widget().text()
                     p_unit = self.grid2.itemAtPosition(row, 6).widget().text()
