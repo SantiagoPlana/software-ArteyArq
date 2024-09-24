@@ -18,7 +18,6 @@ class Signals(qtc.QObject):
     error = qtc.pyqtSignal(tuple)
     result = qtc.pyqtSignal(object)
 
-
 class Worker(qtc.QRunnable):
 
     def __init__(self, fn, *args, **kwargs):
@@ -46,6 +45,162 @@ class Worker(qtc.QRunnable):
         finally:
             self.signals.finished.emit()
 
+class CargarStock(qtw.QDialog):
+    """Dialog para carga de stock"""
+
+    signalItemCargado = qtc.pyqtSignal(str)
+
+    def __init__(self):
+        super().__init__()
+        print('hey')
+        self.setWindowIcon(QIcon('png_aya.png'))
+        self.setMinimumSize(260, 310)
+        self.setSizeGripEnabled(True)
+        self.grid = qtw.QGridLayout()
+        self.grid.setSpacing(18)
+        self.setLayout(self.grid)
+        self.setWindowTitle('Nuevo producto')
+
+
+        # self.material = qtw.QComboBox()
+        # Todas line edit
+        self.idcategoria = qtw.QComboBox()  # código de producto
+        self.idproducto = qtw.QLineEdit()  # código numérico
+        self.nombreproducto = qtw.QLineEdit() # nombre producto
+        self.medida = qtw.QComboBox() # tipo de calculo para el producto
+        self.precio = qtw.QLineEdit()
+
+        self.idcategoria.setEditable(True)
+        self.medida.setEditable(True)
+
+
+        self.comboboxes = [self.idcategoria, self.medida]
+
+        self.btn_cargar = qtw.QPushButton('Cargar producto', clicked=self.cargar)
+        self.btn_cancelar = qtw.QPushButton('Cancelar', clicked=self.close)
+
+
+        self.grid.addWidget(qtw.QLabel("IdCategoría"), 1, 0)
+        self.grid.addWidget(self.idcategoria, 2, 0)
+        self.grid.addWidget(qtw.QLabel("IdProducto"), 3, 0)
+        self.grid.addWidget(self.idproducto, 4, 0)
+        self.grid.addWidget(qtw.QLabel('Nombre Producto'), 5, 0)
+        self.grid.addWidget(self.nombreproducto, 6, 0)
+        self.grid.addWidget(qtw.QLabel('Medida'), 7, 0)
+        self.grid.addWidget(self.medida, 8, 0)
+        self.grid.addWidget(qtw.QLabel('Precio Unitario'), 9, 0)
+        self.grid.addWidget(self.precio, 10, 0)
+        self.grid.addWidget(self.btn_cargar, 11, 0)
+        self.grid.addWidget(self.btn_cancelar, 11, 1)
+
+
+        self.onlyInt = QDoubleValidator()
+        self.precio.setValidator(self.onlyInt)
+
+        # self.material.addItems(['Pino', 'Algarrobo'])
+
+        # cargar datos
+
+        self.cargar_csv('database/DB/productos.csv')
+        print('se cargo')
+
+        self.lista_categorias = self.stock['IdCategoría'].dropna().astype(str).unique() # hacer 1 de estos para el tipo de articulo y otro para el tipo de calculo
+        self.lista_medidas = self.stock['Medida'].dropna().astype(str).unique()
+
+        self.idcategoria.clear()
+        self.idcategoria.addItem('')
+        self.idcategoria.addItems(self.lista_categorias)
+
+        self.medida.clear()
+        self.medida.addItem('')
+        self.medida.addItems(self.lista_medidas)
+        print('se cargo')
+        self.completer_tipo = qtw.QCompleter(self.lista_categorias, self)
+        self.completer_tipo.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.completer_tipo.setFilterMode(qtc.Qt.MatchContains)
+        self.idcategoria.setCompleter(self.completer_tipo)
+
+        self.completer_medida = qtw.QCompleter(self.lista_medidas, self)
+        self.completer_medida.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.completer_medida.setFilterMode(qtc.Qt.MatchContains)
+        self.medida.setCompleter(self.completer_medida)
+
+        self.signalItemCargado.connect(self.msg_display)
+
+        # self.completer_modelo = qtw.QCompleter(self.lista_modelos, self)
+        # self.completer_modelo.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        # self.modelo.setCompleter(self.completer_modelo)
+
+    def cargar_csv(self, path):
+        self.stock = pd.read_csv(path, sep=',')
+
+    @qtc.pyqtSlot(str)
+    def set_complete_tipo(self, string=str):
+        ## Es esto o lo que está explicito en el constructor
+        print('Signal!')
+        try:
+            subset = self.stock[self.stock['IdCategoría'] == string]['IdCategoría'].dropna().astype(str).unique()
+            self.completer_tipo = qtw.QCompleter(subset, self)
+            self.completer_tipo.setFilterMode(qtc.Qt.MatchContains)
+            self.completer_tipo.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+            # self.idcategoria.setCompleter(self.completer_tipo)
+        except Exception as e:
+            print(e)
+        # self.completer_tipo.activated.connect(self.set_complete_medida)
+
+    @qtc.pyqtSlot(str)
+    def set_complete_medida(self, string=str):
+        # print('Signal!')
+        subset = self.stock[self.stock['IdCategoría'] == string]['Medida']
+        completer = qtw.QCompleter(subset, self)
+        completer.setFilterMode(qtc.Qt.MatchContains)
+        completer.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        self.modelo.setCompleter(completer)
+
+    def cargar(self):
+        id_categoria = self.idcategoria.currentText()
+        id_producto = self.idproducto.text()
+        nombre_producto = self.nombreproducto.text()
+        medida = self.medida.currentText()
+        precio = self.precio.text()
+        # print(material, tipo, modelo, cantidad)
+        if len(id_categoria) == 0 or len(id_producto) == 0 or len(nombre_producto) == 0 or len(precio) == 0:
+            message = "Todos los campos deben estar completos"
+            msg = qtw.QMessageBox()
+            msg.setText(message)
+            msg.setIcon(qtw.QMessageBox.Warning)
+            msg.setWindowTitle('Datos insuficientes')
+            msg.exec_()
+        else:
+            try:
+                denom_completa = id_categoria + ' ' + id_producto + ' ' + nombre_producto
+                contador = int(self.stock['Contador'].max()) + 1
+                stock = 0
+                long_hoja = 0
+                lst = [id_categoria, id_producto, nombre_producto,
+                       stock, precio, medida, contador, long_hoja, denom_completa]
+                cols = self.stock.columns
+                dic = {}
+                for i, col in enumerate(cols):
+                    dic[col] = lst[i]
+
+                df = pd.DataFrame([dic])
+                self.stock = pd.concat([self.stock, df], ignore_index=True)
+                self.stock.to_csv('database/DB/productos.csv', index=False)
+
+                self.msg_display('Listo, loco, producto cargado.')
+            except Exception as e:
+                print(e)
+
+
+    @qtc.pyqtSlot(str)
+    def msg_display(self, string):
+        msg = qtw.QMessageBox()
+        msg.setWindowIcon(QIcon('png_aya.png'))
+        msg.setText(string)
+        msg.setWindowTitle(' ')
+        msg.setIcon(qtw.QMessageBox.NoIcon)
+        msg.exec_()
 
 class CsvTableModel(qtc.QAbstractTableModel):
     """The model for a CSV table."""
@@ -392,6 +547,7 @@ class MainWindow(qtw.QWidget):
         # self.menu.addAction('Guardar cambios')
         self.menu.addAction('Abrir tabla productos', self.abrir_tabla_productos)
         self.menu.addAction('Abrir tabla de presupuestos', self.abrir_tabla_presupuestos)
+        self.menu.addAction('Cargar producto nuevo', self.cargar_producto)
 
         self.status_bar = qtw.QStatusBar()
 
@@ -440,6 +596,11 @@ class MainWindow(qtw.QWidget):
         self.combo6 = qtw.QComboBox(objectName='item6')
         self.combo7 = qtw.QComboBox(objectName='item7')
         self.combo8 = qtw.QComboBox(objectName='item8')
+
+        self.combo_boxes = [self.combo1, self.combo2, self.combo3, self.combo4, self.combo5, self.combo6, self.combo7,
+                       self.combo8]
+        self.setup_comboboxes()
+        self.style_sheet_completers()
 
         # Col 2
         self.label_stock = qtw.QLabel('Stock')
@@ -685,84 +846,7 @@ class MainWindow(qtw.QWidget):
         self.presupuestos_pendientes.setCompleter(self.completer_pendientes)
 
         # Productos
-        self.combo1.addItem('')
-        self.combo1.addItems(
-            self.productos.loc[:, 'DenominaciónCompleta'])
-        self.combo2.addItem('')
-        self.combo2.addItems(
-            self.productos.loc[:, 'DenominaciónCompleta'])
-        self.combo3.addItem('')
-        self.combo3.addItems(
-            self.productos.loc[:, 'DenominaciónCompleta'])
-        self.combo4.addItem('')
-        self.combo4.addItems(
-            self.productos.loc[:, 'DenominaciónCompleta'])
-        self.combo5.addItem('')
-        self.combo5.addItems(
-            self.productos.loc[:, 'DenominaciónCompleta'])
-        self.combo6.addItem('')
-        self.combo6.addItems(
-            self.productos.loc[:, 'DenominaciónCompleta'])
-        self.combo7.addItem('')
-        self.combo7.addItems(
-            self.productos.loc[:, 'DenominaciónCompleta'])
-        self.combo8.addItem('')
-        self.combo8.addItems(
-            self.productos.loc[:, 'DenominaciónCompleta'])
-        # Instanciamos completers
-        # Lamentablemente hay que setear un completer por combobox o si no se borran los valores de uno
-        # cuando se modifica otro...
-        self.completer_productos = qtw.QCompleter(
-            self.productos.loc[:, 'DenominaciónCompleta'], self)
-        self.completer_productos.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_productos.setFilterMode(qtc.Qt.MatchContains)
-        self.completer_productos2 = qtw.QCompleter(
-            self.productos.loc[:, 'DenominaciónCompleta'], self)
-        self.completer_productos2.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_productos2.setFilterMode(qtc.Qt.MatchContains)
-        self.completer_productos3 = qtw.QCompleter(
-            self.productos.loc[:, 'DenominaciónCompleta'], self)
-        self.completer_productos3.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_productos3.setFilterMode(qtc.Qt.MatchContains)
-        self.completer_productos4 = qtw.QCompleter(
-            self.productos.loc[:, 'DenominaciónCompleta'], self)
-        self.completer_productos4.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_productos4.setFilterMode(qtc.Qt.MatchContains)
-        self.completer_productos5 = qtw.QCompleter(
-            self.productos.loc[:, 'DenominaciónCompleta'], self)
-        self.completer_productos5.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_productos5.setFilterMode(qtc.Qt.MatchContains)
-        self.completer_productos6 = qtw.QCompleter(
-            self.productos.loc[:, 'DenominaciónCompleta'], self)
-        self.completer_productos6.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_productos6.setFilterMode(qtc.Qt.MatchContains)
-        self.completer_productos7 = qtw.QCompleter(
-            self.productos.loc[:, 'DenominaciónCompleta'], self)
-        self.completer_productos7.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_productos7.setFilterMode(qtc.Qt.MatchContains)
-        self.completer_productos8 = qtw.QCompleter(
-            self.productos.loc[:, 'DenominaciónCompleta'], self)
-        self.completer_productos8.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_productos8.setFilterMode(qtc.Qt.MatchContains)
 
-
-        # Setting editability and completer for each product combo-box
-        self.combo1.setEditable(True)
-        self.combo2.setEditable(True)
-        self.combo3.setEditable(True)
-        self.combo4.setEditable(True)
-        self.combo5.setEditable(True)
-        self.combo6.setEditable(True)
-        self.combo7.setEditable(True)
-        self.combo8.setEditable(True)
-        self.combo1.setCompleter(self.completer_productos)
-        self.combo2.setCompleter(self.completer_productos2)
-        self.combo3.setCompleter(self.completer_productos3)
-        self.combo4.setCompleter(self.completer_productos4)
-        self.combo5.setCompleter(self.completer_productos5)
-        self.combo6.setCompleter(self.completer_productos6)
-        self.combo7.setCompleter(self.completer_productos7)
-        self.combo8.setCompleter(self.completer_productos8)
 
         end1 = time.perf_counter()
         total1 = end1 - start1
@@ -899,31 +983,6 @@ class MainWindow(qtw.QWidget):
 
         # stylesheet
 
-        self.completer_productos.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                       "selection-background-color: #FF9B99;"
-                                                       "selection-color: solidblack;")
-        self.completer_productos2.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                        "selection-background-color: #FF9B99;"
-                                                        "selection-color: solidblack;")
-        self.completer_productos3.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                        "selection-background-color: #FF9B99;"
-                                                        "selection-color: solidblack;"
-                                                        )
-        self.completer_productos4.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                        "selection-background-color: #FF9B99;"
-                                                        "selection-color: solidblack;")
-        self.completer_productos5.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                        "selection-background-color: #FF9B99;"
-                                                        "selection-color: solidblack;")
-        self.completer_productos6.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                        "selection-background-color: #FF9B99;"
-                                                        "selection-color: solidblack;")
-        self.completer_productos7.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                        "selection-background-color: #FF9B99;"
-                                                        "selection-color: solidblack;")
-        self.completer_productos8.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                        "selection-background-color: #FF9B99;"
-                                                        "selection-color: solidblack;")
         self.completer_clientes.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                       "selection-background-color: #FF9B99;"
                                                       "selection-color:solidblack;")
@@ -937,6 +996,39 @@ class MainWindow(qtw.QWidget):
         self.status_bar.setStyleSheet("color:white; font-size: 13pt;")
         # Show
         self.show()
+
+    def setup_comboboxes(self):
+        # Extract valid items from the DataFrame once
+        valid_items = self.productos['DenominaciónCompleta'].dropna().astype(str).unique()
+        valid_items = [item for item in valid_items if item]  # Filter out empty strings
+
+        # Store completers as attributes
+        self.completers = []
+
+        for combo_box in self.combo_boxes:
+            completer = self.setup_combobox(combo_box, valid_items)
+            self.completers.append(completer)  # Store each completer for later use
+
+
+    def setup_combobox(self, combo_box, items):
+        combo_box.clear()
+        combo_box.addItem('')  # Placeholder
+        combo_box.addItems(items)
+        combo_box.setEditable(True)
+
+        completer = qtw.QCompleter(items)
+        completer.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        completer.setFilterMode(qtc.Qt.MatchContains)
+
+        combo_box.setCompleter(completer)
+
+        return completer
+
+    def style_sheet_completers(self):
+        for completer in self.completers:
+            completer.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                       "selection-background-color: #FF9B99;"
+                                                       "selection-color: solidblack;")
 
     # Reporte pdf
     def getPath(self):
@@ -1029,6 +1121,7 @@ class MainWindow(qtw.QWidget):
     # Form methods
     @qtc.pyqtSlot()
     def complete_products(self, string, idx):
+        # completa los precios según el producto elegido y los cálculos según las medidas
         subset = self.productos[
             self.productos['DenominaciónCompleta'] == string]
         row, column, cols, rows = self.grid2.getItemPosition(idx)
@@ -1418,25 +1511,28 @@ class MainWindow(qtw.QWidget):
         #self.display_p_unitario()
 
     def borrar_presupuesto_cargado(self):
-        cliente = self.cliente.text()
-        motivo = self.motivo.toPlainText()
-        if len(cliente) > 0 and len(motivo) > 0:
-            index = self.presupuesto[
-                (self.presupuesto['Cliente'] == cliente) & (self.presupuesto['Motivo'] == motivo)].index[0]
-            msg = qtw.QMessageBox()
-            msg.setText(
-                f'Está seguro de que desea borrar el trabajo de {cliente} con motivo: {motivo}?')
-            msg.setStandardButtons(qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel)
-            ret = msg.exec_()
-            if ret == qtw.QMessageBox.Ok:
-                self.presupuesto.drop(index, axis='index', inplace=True)
-                self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
-                self.status_bar.showMessage(
-                    f'Se eliminó el trabajo de {cliente} con motivo "{motivo}".', 15000)
-                self.borrar_formulario()
-                self.completers_from_presupuesto()
-            else:
-                msg.close()
+        try:
+            cliente = self.cliente.text()
+            motivo = self.motivo.toPlainText()
+            if len(cliente) > 0 and len(motivo) > 0:
+                index = self.presupuesto[
+                    (self.presupuesto['Cliente'] == cliente) & (self.presupuesto['Motivo'] == motivo)].index[0]
+                msg = qtw.QMessageBox()
+                msg.setText(
+                    f'Está seguro de que desea borrar el trabajo de {cliente} con motivo: {motivo}?')
+                msg.setStandardButtons(qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel)
+                ret = msg.exec_()
+                if ret == qtw.QMessageBox.Ok:
+                    self.presupuesto.drop(index, axis='index', inplace=True)
+                    self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+                    self.status_bar.showMessage(
+                        f'Se eliminó el trabajo de {cliente} con motivo "{motivo}".', 15000)
+                    self.borrar_formulario()
+                    self.completers_from_presupuesto()
+                else:
+                    msg.close()
+        except Exception as e:
+            self.status_bar.showMessage('No, cht.')
     # Cálculos
 
     @qtc.pyqtSlot()
@@ -1546,6 +1642,15 @@ class MainWindow(qtw.QWidget):
     def abrir_tabla_productos(self):
         self.tabla = Tabla('database/DB/productos.csv')
         self.tabla.exec_()
+
+    def cargar_producto(self):
+        print('inicio función')
+        self.ventana_carga = CargarStock()
+        try:
+            self.ventana_carga.exec_()
+        except Exception as e:
+            print(e)
+        print('final función')
 
 
 

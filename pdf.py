@@ -156,7 +156,7 @@ def orden_trabajo(dic, path=''):
     motivo = dic['Motivo']
     canvas.setFont('Calibri', 10)
     f_entrega = dic['F_Entrega']
-    f_recepcion = dic['F_Recepción']
+    f_recepcion = str(fecha)
     canvas.drawString(x=100, y=length-20, text=f'Fecha Recepción: {f_recepcion}')
     canvas.drawString(x=350, y=length-20, text=f'Fecha Entrega: {f_entrega}')
     canvas.line(x1=60, y1=length-30, x2=width-60, y2=length-30)
