@@ -987,25 +987,25 @@ class MainWindow(qtw.QWidget):
 
     def cargar_data_productos(self):
         """
-        Load product data from a CSV file.
-        If a path is stored in settings, it uses that; otherwise,
-        it prompts the user to select a directory and saves the path.
+        Cargar datos de productos de un archivo CSV.
+        Se fija si el path está guardado en los settings; si no,
+        insta al usuario a seleccionar el archivo.
         """
-        # Check if the product database path is stored in settings
+        # Revisa si el path de la base está en los valores de configuración
         if 'DB_Productos' in self.settings.allKeys():
             path = self.settings.value('DB_Productos')
         else:
-            # Prompt user to select the directory for the database
+            # Insta al usuario a elegir el archivo en los directorios
             path, _ = qtw.QFileDialog.getOpenFileName(
                 self,
                 'Abrir base de datos de productos',
                 qtc.QDir.currentPath(),
                 'CSV Files (*.csv);;All Files (*)'
             )
-            # Save the selected path to settings
+            # Guarda el path en la configuración
         if path:
             self.settings.setValue('DB_Productos', path)
-            # Attempt to load the CSV file
+            # Trata de cargar el archivo CSV
             try:
                 self.productos = pd.read_csv(path, sep=',')
             except FileNotFoundError:
@@ -1078,8 +1078,9 @@ class MainWindow(qtw.QWidget):
                                                         qtc.QDir.currentPath(),
                                                         qtw.QFileDialog.ShowDirsOnly |
                                                         qtw.QFileDialog.DontResolveSymlinks)
+        if path:
             self.settings.setValue('PDF_Path', path)
-        return path
+            return path
 
     # Settings
     def closeEvent(self, event):
@@ -1566,8 +1567,8 @@ class MainWindow(qtw.QWidget):
                     msg.close()
         except Exception as e:
             self.status_bar.showMessage('No, cht.')
-    # Cálculos
 
+    # Cálculos
     @qtc.pyqtSlot()
     def calculo_medidas(self):
         # medidas originales
