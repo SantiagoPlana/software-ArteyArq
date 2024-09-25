@@ -1032,6 +1032,7 @@ class MainWindow(qtw.QWidget):
                                                        "selection-color: solidblack;")
 
     def connect_comboboxes(self):
+        """Conecta las comboboxes de productos con los métodos necesarios."""
         for i in range(1, 9):
             combo = getattr(self, f'combo{i}')
             combo.activated.connect(lambda checked, c=combo: self.complete_products(string=c.currentText(),
@@ -1157,18 +1158,7 @@ class MainWindow(qtw.QWidget):
         except Exception as e:
             pass
 
-    @qtc.pyqtSlot()
-    def borrar_precios(self, idx):
-        if len(self.sender().text()) == 0:
-            try:
-                row, column, cols, rows = self.grid2.getItemPosition(idx)
-                self.grid2.itemAtPosition(row, 5).widget().clear()
-                self.grid2.itemAtPosition(row, 6).widget().clear()
-                self.grid2.itemAtPosition(row, 7).widget().clear()
-                self.display_total()
-                #self.display_p_unitario()
-            except Exception as e:
-                print(e)
+
 
     @qtc.pyqtSlot()
     def restaurar_lista_trabajos(self):
@@ -1648,23 +1638,34 @@ class MainWindow(qtw.QWidget):
         self.display_p_unitario()
 
     # Display
+    @qtc.pyqtSlot()
+    def borrar_precios(self, idx):
+        if not self.sender().text():
+            try:
+                row, _, _, _ = self.grid2.getItemPosition(idx)
+                for column in range(5, 8):
+                    widget = self.grid2.itemAtPosition(row, column).widget()
+                    if widget:
+                        widget.clear()
+                self.display_total()
+            except IndexError as e:
+                print(f'Index Error: {e}')
+            except Exception as e:
+                print(f'Error inesperado: {e}')
+
     def display_total(self):
         """Muestra el total en la QLabel correspondiente"""
-        total_final = 0
-        if len(self.cantidad.text()) == 0:
-            cantidad = 0
-        elif len(self.cantidad.text()) != 0:
-            cantidad = int(self.cantidad.text())
-            for row in range(8, 20):
-                if row != 16:
-                    item = self.grid2.itemAtPosition(row, 7).widget()
-                    if isinstance(item, qtw.QLineEdit):
-                        text = self.grid2.itemAtPosition(row, 7).widget().text()
-                        if len(text) > 0:
-                            total_final += float(text)
-        total_final = total_final * cantidad
-        total_final = '%.2f' % total_final
-        self.total.setText(str(total_final))
+        cantidad = self.cantidad.text() or '0'  # Default to '0' if empty
+        cantidad = int(cantidad) if cantidad.isdigit() else 0
+
+        total_final = sum(
+            float(self.grid2.itemAtPosition(row, 7).widget().text() or 0)
+            for row in range(8, 20)
+            if row != 16 and isinstance(self.grid2.itemAtPosition(row, 7).widget(), qtw.QLineEdit)
+        )
+
+        total_final *= cantidad
+        self.total.setText(f'{total_final:.2f}')
 
     def display_p_unitario(self):
         """Muestra el precio unitario en la QLabel correspondiente"""
