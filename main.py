@@ -534,75 +534,40 @@ class MainWindow(qtw.QWidget):
         self.setWindowIcon(QIcon('png_aya.ico'))
 
         self.productos = None
-        self.cargar_data_productos()
-        # self.showFullScreen()
-
+        self.threadpool = qtc.QThreadPool()
+        # self.cargar_data_productos()
+        self.load_data_thread()
         # self.center()
-        #try:
-        #    self.resize(self.settings.value('window size'))
-        #except:
+
         self.setFixedWidth(1600)
         self.setFixedHeight(900)
         # self.resize(200, 500)
 
+        # setup barra de menu y sus botones
         self.menu = qtw.QMenuBar(objectName='menu')
-        # self.menu.addAction('Guardar cambios')
         self.menu.addAction('Abrir tabla productos', self.abrir_tabla_productos)
         self.menu.addAction('Abrir tabla de presupuestos', self.abrir_tabla_presupuestos)
         self.menu.addAction('Cargar producto nuevo', self.cargar_producto)
 
+        # setup de la status bar
         self.status_bar = qtw.QStatusBar()
-        self.threadpool = qtc.QThreadPool()
 
+        # Título y logo
         self.title = qtw.QLabel('Presupuesto', objectName='titulo')
         self.title.setAlignment(qtc.Qt.AlignTop)
-        # Logo
+
         self.logo = QPixmap('png_aya.png')
         self.image = qtw.QLabel(self)
         scaled_pixmap = self.logo.scaled(120, 120, qtc.Qt.KeepAspectRatio)
         self.image.setPixmap(scaled_pixmap)
         self.image.setAlignment(qtc.Qt.AlignRight)
 
-        self.presupuestos_pendientes = qtw.QComboBox(objectName='trabajos_pendientes')
-        self.clientes_combo = qtw.QComboBox()
-        self.trabajos_todos = qtw.QComboBox(objectName='combo_trabajos_todos')
-        self.trabajos_año = qtw.QComboBox()
+        # Crea lineedits y comboboxes
+        self.crear_widgets()
 
-        self.cliente = qtw.QLineEdit(objectName='cliente')
-        self.motivo = qtw.QTextEdit(objectName='motivo')
-        self.cantidad = qtw.QLineEdit('1', objectName='cantidad')
-        self.med_orig_cm_alto = qtw.QLineEdit(objectName='alto_original')
-        self.med_orig_cm_ancho = qtw.QLineEdit(objectName='ancho_original')
-        self.med_final_cm_alto = qtw.QLineEdit(objectName='alto_final')
-        self.med_final_cm_ancho = qtw.QLineEdit(objectName='ancho_final')
-        self.med_final_cm_ancho.setText('0')
-        self.med_final_cm_alto.setText('0')
-        self.pp_cm = qtw.QLineEdit(objectName='pp')
-        self.var = qtw.QLineEdit(objectName='var')
-        self.sup_m2 = qtw.QLineEdit()
-        self.per_ml = qtw.QLineEdit()
-
-        self.fecha_rec = qtw.QLineEdit(objectName='fecha_recepción')
-        self.fecha_entrega = qtw.QLineEdit(objectName='fecha_entrega')
-        self.fecha_realizacion = qtw.QLineEdit(objectName='fecha_realización')
-
-        #### Detalle ####
-        # Col 1
-        self.label_nombre = qtw.QLabel('Nombre del producto')
-        self.combo1 = qtw.QComboBox(objectName='item1')
-        self.combo2 = qtw.QComboBox(objectName='item2')
-        self.combo3 = qtw.QComboBox(objectName='item3')
-        self.combo4 = qtw.QComboBox(objectName='item4')
-        self.combo5 = qtw.QComboBox(objectName='item5')
-        self.combo6 = qtw.QComboBox(objectName='item6')
-        self.combo7 = qtw.QComboBox(objectName='item7')
-        self.combo8 = qtw.QComboBox(objectName='item8')
-
-        self.combo_boxes = [self.combo1, self.combo2, self.combo3, self.combo4, self.combo5, self.combo6, self.combo7,
-                       self.combo8]
         # Cargar los items a las comboboxes, luego los completers y luego el stylesheet
-        self.setup_comboboxes()
-        self.style_sheet_completers()
+        # self.setup_comboboxes()
+        # self.style_sheet_completers()
 
         # Col 2
         self.label_stock = qtw.QLabel('Stock')
@@ -886,7 +851,7 @@ class MainWindow(qtw.QWidget):
 
 
         ####Conexiones####
-        self.connect_comboboxes()
+        # self.connect_comboboxes()
 
         # Borrar
         self.btn_borrar.clicked.connect(self.borrar_formulario)
@@ -950,6 +915,58 @@ class MainWindow(qtw.QWidget):
         # Show
         self.show()
 
+    def crear_widgets(self):
+        """Crea e inicializa widgets."""
+        self.presupuestos_pendientes = qtw.QComboBox(objectName='trabajos_pendientes')
+        self.clientes_combo = qtw.QComboBox()
+        self.trabajos_todos = qtw.QComboBox(objectName='combo_trabajos_todos')
+        self.trabajos_año = qtw.QComboBox()
+
+        self.cliente = qtw.QLineEdit(objectName='cliente')
+        self.motivo = qtw.QTextEdit(objectName='motivo')
+        self.cantidad = qtw.QLineEdit('1', objectName='cantidad')
+        self.med_orig_cm_alto = qtw.QLineEdit(objectName='alto_original')
+        self.med_orig_cm_ancho = qtw.QLineEdit(objectName='ancho_original')
+        self.med_final_cm_alto = qtw.QLineEdit(objectName='alto_final')
+        self.med_final_cm_ancho = qtw.QLineEdit(objectName='ancho_final')
+        self.med_final_cm_ancho.setText('0')
+        self.med_final_cm_alto.setText('0')
+        self.pp_cm = qtw.QLineEdit(objectName='pp')
+        self.var = qtw.QLineEdit(objectName='var')
+        self.sup_m2 = qtw.QLineEdit()
+        self.per_ml = qtw.QLineEdit()
+
+        self.fecha_rec = qtw.QLineEdit(objectName='fecha_recepción')
+        self.fecha_entrega = qtw.QLineEdit(objectName='fecha_entrega')
+        self.fecha_realizacion = qtw.QLineEdit(objectName='fecha_realización')
+
+        #### Detalle ####
+        # Col 1
+        self.label_nombre = qtw.QLabel('Nombre del producto')
+        self.combo1 = qtw.QComboBox(objectName='item1')
+        self.combo2 = qtw.QComboBox(objectName='item2')
+        self.combo3 = qtw.QComboBox(objectName='item3')
+        self.combo4 = qtw.QComboBox(objectName='item4')
+        self.combo5 = qtw.QComboBox(objectName='item5')
+        self.combo6 = qtw.QComboBox(objectName='item6')
+        self.combo7 = qtw.QComboBox(objectName='item7')
+        self.combo8 = qtw.QComboBox(objectName='item8')
+
+        self.combo_boxes = [self.combo1, self.combo2, self.combo3, self.combo4, self.combo5, self.combo6, self.combo7,
+                            self.combo8]
+
+    def load_data_thread(self):
+        """Load product data in a separate thread."""
+        worker = Worker(self.cargar_data_productos)
+        worker.signals.result.connect(self.on_data_loaded)
+        self.threadpool.start(worker)
+
+    def on_data_loaded(self, productos):
+        """Handle the result of loading data."""
+        self.productos = productos
+        self.setup_comboboxes()
+        self.style_sheet_completers()
+        self.connect_comboboxes()
 
     def cargar_data_productos(self):
         """
@@ -1066,6 +1083,7 @@ class MainWindow(qtw.QWidget):
             return None
 
             # Settings
+
     def closeEvent(self, event):
         """Método que se dispara al cerrar el programa."""
         self.settings.setValue('window size', self.size())
