@@ -1491,28 +1491,30 @@ class MainWindow(qtw.QWidget):
         self.borrar_formulario()
 
     def get_item_details(self, producto):
-        """Retrieve item details from productos based on the product name."""
+        """Extraer los detalles según el nombre del item.
+        Returns: Nombre del Item; Id numérico, alias Contador en la base de datos."""
         item_name = \
         self.productos.loc[self.productos['DenominaciónCompleta'] == producto, 'DenominaciónCompleta'].values[0]
         item_id = self.productos.loc[self.productos['DenominaciónCompleta'] == producto, 'Contador'].values[0]
         return item_name, item_id
 
     def add_empty_item(self, pedido, count, p_unit):
-        """Add an empty item to the pedido dictionary."""
+        """Añade un item vacío al diccionario."""
         pedido[f'CCProducto{count}'] = 0
         pedido[f'ctpreciouni{count}'] = 0
         pedido[f'p_unitario{count}'] = p_unit
 
     def guardar_presupuesto(self, pedido):
+        """Añade la orden de trabajo (presupuesto) al CSV de presupuestos."""
         print('guarda_presupuesto started')
         dict_for_df = {key: value for key, value in pedido.items() if 'p_unitario' not in key}
         new_df = pd.DataFrame([dict_for_df])
         self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
         self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
-        print('guardado')
+        # self.status_bar.showMessage('')
 
     def handle_pdf_path_error(self, error, pedido):
-        """Handle errors that occur during processing."""
+        """Manejo de errores de directorios para guardar los PDFs."""
         self.status_bar.showMessage('No se encontró el directorio.', 10000)
         path = self.getPath()  # Attempt to get a valid path
         if path:
@@ -1520,10 +1522,12 @@ class MainWindow(qtw.QWidget):
             orden_trabajo(pedido, path)
             self.status_bar.showMessage('PDF de orden generado.', 10000)
         else:
-            self.status_bar.showMessage('Dirección no válida para PDF.', 10000)
+            self.status_bar.showMessage('Dirección no válida para guardar PDF.', 10000)
 
+    # Revisar
     @qtc.pyqtSlot()
     def completar_trabajo(self):
+        """Marca un trabajo existente como completado."""
         try:
             combobox_index = self.presupuestos_pendientes.currentIndex()
             cliente = self.cliente.text()
@@ -1551,23 +1555,24 @@ class MainWindow(qtw.QWidget):
 
     @qtc.pyqtSlot()
     def borrar_formulario(self):
+        """Borra todos los campos de la ventana principal."""
         try:
             for i in range(self.grid1.count()):
-                item = self.grid1.itemAt(i).widget()
-                if isinstance(item, qtw.QComboBox):
-                    item.clearEditText()
+                item = self.grid1.itemAt(i).widget()    # Define los elementos en cada grid
+                if isinstance(item, qtw.QComboBox):     # Los limpia si son limpiables básicamente
+                    item.clearEditText()                # según el tipo posible.
             for i in range(self.grid2.count()):
                 item = self.grid2.itemAt(i).widget()
                 if isinstance(item, qtw.QComboBox):
                     item.clearEditText()
                 elif isinstance(item, qtw.QLineEdit) or isinstance(item, qtw.QTextEdit):
                     item.clear()
-            self.med_final_cm_ancho.setText('0')
-            self.med_final_cm_alto.setText('0')
+            self.med_final_cm_ancho.setText('0')        # Setea valores por defecto
+            self.med_final_cm_alto.setText('0')         # ! Setear fecha
             self.cantidad.setText('1')
             self.display_total()
             if isinstance(self.sender(), qtw.QPushButton):
-                # restore original list
+                # restaura lista original de trabajos
                 self.trabajos_todos.clear()
                 self.trabajos_todos.addItem('')
                 self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
@@ -1576,6 +1581,7 @@ class MainWindow(qtw.QWidget):
         #self.display_p_unitario()
 
     def borrar_presupuesto_cargado(self):
+        """Borra el presupuesto que se ha cargado desde los comboboxes de la base de datos de presupuestos"""
         try:
             cliente = self.cliente.text()
             motivo = self.motivo.toPlainText()
@@ -1600,6 +1606,7 @@ class MainWindow(qtw.QWidget):
             self.status_bar.showMessage('No, cht.')
 
     # Cálculos
+    # Revisar si se puede mejorar.
     @qtc.pyqtSlot()
     def calculo_medidas(self):
         # medidas originales
@@ -1700,6 +1707,7 @@ class MainWindow(qtw.QWidget):
         total_unitario = '%.2f' % total_unitario
         self.punit.setText(str(total_unitario))
 
+    # Funciones de la barra del menú
     def abrir_tabla_presupuestos(self):
         self.tabla = Tabla('database/DB/presupuestos_limpio.csv')
         self.tabla.exec_()
