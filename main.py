@@ -886,39 +886,7 @@ class MainWindow(qtw.QWidget):
 
 
         ####Conexiones####
-        self.combo1.activated.connect(lambda: self.complete_products(string=self.combo1.currentText(),
-                                                                     idx=self.grid2.indexOf(self.combo1)))
-        self.combo2.activated.connect(lambda: self.complete_products(string=self.combo2.currentText(),
-                                                                     idx=self.grid2.indexOf(self.combo2)))
-        self.combo3.activated.connect(lambda: self.complete_products(string=self.combo3.currentText(),
-                                                                     idx=self.grid2.indexOf(self.combo3)))
-        self.combo4.activated.connect(lambda: self.complete_products(string=self.combo4.currentText(),
-                                                                     idx=self.grid2.indexOf(self.combo4)))
-        self.combo5.activated.connect(lambda: self.complete_products(string=self.combo5.currentText(),
-                                                                     idx=self.grid2.indexOf(self.combo5)))
-        self.combo6.activated.connect(lambda: self.complete_products(string=self.combo6.currentText(),
-                                                                     idx=self.grid2.indexOf(self.combo6)))
-        self.combo7.activated.connect(lambda: self.complete_products(string=self.combo7.currentText(),
-                                                                     idx=self.grid2.indexOf(self.combo7)))
-        self.combo8.activated.connect(lambda: self.complete_products(string=self.combo8.currentText(),
-                                                                     idx=self.grid2.indexOf(self.combo8)))
-        # Borrar lineedits de precios y stock cuando se borra el producto
-        self.combo1.lineEdit().textEdited.connect(lambda:
-                                                  self.borrar_precios(self.grid2.indexOf(self.combo1)))
-        self.combo2.lineEdit().textEdited.connect(lambda:
-                                                  self.borrar_precios(self.grid2.indexOf(self.combo2)))
-        self.combo3.lineEdit().textEdited.connect(lambda:
-                                                  self.borrar_precios(self.grid2.indexOf(self.combo3)))
-        self.combo4.lineEdit().textEdited.connect(lambda:
-                                                  self.borrar_precios(self.grid2.indexOf(self.combo4)))
-        self.combo5.lineEdit().textEdited.connect(lambda:
-                                                  self.borrar_precios(self.grid2.indexOf(self.combo5)))
-        self.combo6.lineEdit().textEdited.connect(lambda:
-                                                  self.borrar_precios(self.grid2.indexOf(self.combo6)))
-        self.combo7.lineEdit().textEdited.connect(lambda:
-                                                  self.borrar_precios(self.grid2.indexOf(self.combo7)))
-        self.combo8.lineEdit().textEdited.connect(lambda:
-                                                  self.borrar_precios(self.grid2.indexOf(self.combo8)))
+        self.connect_comboboxes()
 
         # Borrar
         self.btn_borrar.clicked.connect(self.borrar_formulario)
@@ -942,12 +910,9 @@ class MainWindow(qtw.QWidget):
         self.var.textChanged.connect(self.calculo_medidas)
 
         # Otros
-        self.p_otro1.textChanged.connect(self.display_p_unitario)
-        self.p_otro2.textChanged.connect(self.display_p_unitario)
-        self.p_otro3.textChanged.connect(self.display_p_unitario)
-        self.p_otro1.textChanged.connect(self.display_total)
-        self.p_otro2.textChanged.connect(self.display_total)
-        self.p_otro3.textChanged.connect(self.display_total)
+        for p in [self.p_otro1, self.p_otro2, self.p_otro3]:
+            p.textChanged.connect(self.display_p_unitario)
+            p.textChanged.connect(self.display_total)
 
         self.cantidad.textChanged.connect(self.display_total)
 
@@ -1065,6 +1030,13 @@ class MainWindow(qtw.QWidget):
             completer.popup().setStyleSheet("color: white; font-size: 13pt;"
                                                        "selection-background-color: #FF9B99;"
                                                        "selection-color: solidblack;")
+
+    def connect_comboboxes(self):
+        for i in range(1, 9):
+            combo = getattr(self, f'combo{i}')
+            combo.activated.connect(lambda checked, c=combo: self.complete_products(string=c.currentText(),
+                                                                                    idx=self.grid2.indexOf(c)))
+            combo.lineEdit().textEdited.connect(lambda text, c=combo: self.borrar_precios(self.grid2.indexOf(c)))
 
     # Reporte pdf
     def getPath(self):
