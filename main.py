@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon
@@ -1067,22 +1068,31 @@ class MainWindow(qtw.QWidget):
 
     # Reporte pdf
     def getPath(self):
-        # settings = qtc.QSettings('Arte & Arquitectura', 'Gestor Arte & Arquitectura')
         if 'PDF_Path' in self.settings.allKeys():
             # generate(dic, settings.value('PDF_Path'))
             path = self.settings.value('PDF_Path')
-            print(path)
-        else:
-            path = qtw.QFileDialog.getExistingDirectory(self,
-                                                        'Guardar PDF',
-                                                        qtc.QDir.currentPath(),
-                                                        qtw.QFileDialog.ShowDirsOnly |
-                                                        qtw.QFileDialog.DontResolveSymlinks)
+            if not os.path.isdir(path):  # Revisa si el path es un directorio válido
+                qtw.QMessageBox.warning(self, 'Guarda loco', 'Dirección inválida. Elija otra.')
+                path = None  # Reset del path para pedir otro
+
+                # Si no se encuentra path válido, pide otro
+            if path is None:
+                path = qtw.QFileDialog.getExistingDirectory(
+                    self,
+                    'Guardar PDF',
+                    qtc.QDir.currentPath(),
+                    qtw.QFileDialog.ShowDirsOnly | qtw.QFileDialog.DontResolveSymlinks
+                )
+        # Si el path es válido, lo guarda
         if path:
             self.settings.setValue('PDF_Path', path)
             return path
+        # Si no se selecciona nada return None
+        else:
+            qtw.QMessageBox.information(self, 'Info', 'No seleccionaste nada.')
+            return None
 
-    # Settings
+            # Settings
     def closeEvent(self, event):
         """Método que se dispara al cerrar el programa."""
         self.settings.setValue('window size', self.size())
@@ -1090,39 +1100,42 @@ class MainWindow(qtw.QWidget):
     # Completer initiator
     def completers_from_presupuesto(self):
         """Iniciar y actualizar completers desde la base de datos de presupuestos"""
-        # database
-        presupuesto = pd.read_csv(
-            'database/DB/presupuestos_limpio.csv')
-        # Instanciar completers
-        self.completer_trabajos = qtw.QCompleter(
-            presupuesto.loc[:, 'Motivo'], self
-        )
-        self.completer_clientes = qtw.QCompleter(
-            presupuesto.loc[:, 'Cliente'], self
-        )
-        pendientes = presupuesto[presupuesto['Completado'] == 0]['Motivo']
 
-        self.completer_pendientes = qtw.QCompleter(pendientes, self)
-        # Propiedades
-        self.completer_trabajos.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_trabajos.setFilterMode(qtc.Qt.MatchContains)
-        self.completer_clientes.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_clientes.setFilterMode(qtc.Qt.MatchContains)
-        self.completer_pendientes.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.completer_pendientes.setFilterMode(qtc.Qt.MatchContains)
-        # set
+        try:
+            presupuesto = pd.read_csv(
+                'database/DB/presupuestos_limpio.csv')
+            # Instanciar completers
+            self.completer_trabajos = self.crear_completer(presupuesto['Motivo'])
+            self.completer_clientes = self.crear_completer(presupuesto['Cliente'])
+            pendientes = presupuesto[presupuesto['Completado'] == 0]['Motivo']
+            self.completer_pendientes = self.crear_completer(pendientes)
+            # Setear los completers para cada combobox
+            self.set_completers()
+        except Exception as e:
+            # Handle error in loading presupuesto data
+            self.status_bar.showMessage(f'Error al cargar presupuestos: {str(e)}', 10000)
+
+
+    def crear_completer(self, data):
+        completer = qtw.QCompleter(data, self)
+        completer.setCaseSensitivity(qtc.Qt.CaseInsensitive)
+        completer.setFilterMode(qtc.Qt.MatchContains)
+        self.style_completer_popup(completer)
+        return completer
+
+    def set_completers(self):
+        """Set completers to the respective combo boxes."""
         self.trabajos_todos.setCompleter(self.completer_trabajos)
         self.clientes_combo.setCompleter(self.completer_clientes)
         self.presupuestos_pendientes.setCompleter(self.completer_pendientes)
-        self.completer_clientes.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                      "selection-background-color: #FF9B99;"
-                                                        "selection-color: solidblack;")
-        self.completer_trabajos.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                      "selection-background-color: #FF9B99;"
-                                                      "selection-color: solidblack;")
-        self.completer_pendientes.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                      "selection-background-color: #FF9B99;"
-                                                      "selection-color: solidblack;")
+
+    def style_completer_popup(self, completer):
+        """Apply styling to the completer popup."""
+        completer.popup().setStyleSheet(
+            "color: white; font-size: 13pt;"
+            "selection-background-color: #FF9B99;"
+            "selection-color: solidblack;"
+        )
 
     # Display
     def message(self, string, method, **kwargs):
@@ -1136,20 +1149,19 @@ class MainWindow(qtw.QWidget):
             msg.setIcon(kwargs.get('icon', None))
             msg.setWindowTitle(str(kwargs.get('windowTitle', ' ')))
         except Exception as e:
-            self.status_bar.showMessage(str(e), 10000)
+            self.status_bar.showMessage('Error configurando las propiedades del mensaje.', 10000)
         msg.setStandardButtons(qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel | qtw.QMessageBox.Save)
         ret = msg.exec_()
-        # msg.buttonClicked(qtw.QMessageBox.Ok).connect(lambda: print('method'))
-        # msg.buttonClicked(qtw.QMessageBox.Cancel).connect(msg.close())
+
         if ret == qtw.QMessageBox.Ok:
             try:
                 method.__call__()
             except Exception as e:
-                self.status_bar.showMessage(str(e), 10000)
+                print(f"Error in method call: {str(e)}")  # Log the specific error
+                self.status_bar.showMessage('Error processing the request.', 10000)
         elif ret == qtw.QMessageBox.Save:
             # método para exportar PDF / imprimir presupuesto sin guardarlo
             self.generar_pdf()
-
         else:
             msg.close()
 
@@ -1206,7 +1218,7 @@ class MainWindow(qtw.QWidget):
                 self.trabajos_todos.clear()
                 self.trabajos_todos.addItems(subset_motivos)
             except Exception as e:
-                self.status_bar.showMessage(str(e), 10000)
+                self.status_bar.showMessage('aaaaaaaaaaaaaaaaaaaaa', 10000)
         else:
             self.trabajos_todos.clear()
             self.trabajos_todos.addItem('')
@@ -1423,47 +1435,42 @@ class MainWindow(qtw.QWidget):
     def cargar_venta(self):
         """Cargar toda la información al CSV de presupuestos y generar orden de trabajo en PDF"""
         try:
+            print('checkpoint 0')
             pedido = self.preparar_dic_datos()
+            print(f'diccionario preparado: {pedido}')
             count = 1
             col1 = 1  # columna de nombre
             col2 = 7   # columna de precios
             item_list = []
             for row in range(8, 16):
+                print(f'checkpoint 1: processing row {row}')
                 producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
 
-                if len(producto) > 0:
+                if producto:
+                    print(f'checkpoint 2: producto found: {producto}')
                     precio = self.grid2.itemAtPosition(row, col2).widget().text()
                     p_unit = self.grid2.itemAtPosition(row, 6).widget().text()
                     # get item id
-                    item_name = self.productos[
-                        self.productos[
-                            'DenominaciónCompleta'] == producto][
-                        'DenominaciónCompleta'].values[0]
-                    item_id = self.productos[
-                        self.productos[
-                            'DenominaciónCompleta'] == producto]['Contador'].values[0]
+                    try:
+                        item_name, item_id = self.get_item_details(producto)
+                    except Exception as e:
+                        print(f'Error getting item details: {str(e)}')
+                        item_name, item_id = '', 0
                     pedido['CCProducto' + str(count)] = item_id
                     pedido['ctpreciouni' + str(count)] = '%.2f' % float(precio)
                     pedido['p_unitario' + str(count)] = '%.2f' % float(p_unit)
                     item_list.append(item_name)
                     count += 1
                 else:
-                    item_id = 0
-                    precio = 0
-                    pedido['CCProducto' + str(count)] = item_id
-                    pedido['ctpreciouni' + str(count)] = precio
-                    pedido['p_unitario' + str(count)] = p_unit
+                    print(f'checkpoint 3: no producto found in row {row}')
+                    p_unit = 0
+                    self.add_empty_item(pedido, count, p_unit)
                     count += 1
-
-
-            dict_for_df = {key: value for key, value in pedido.items() if 'p_unitario' not in key}
-            new_df = pd.DataFrame([dict_for_df])
-            self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
-            self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
-
+            print(f'checkpoint 4. Diccionario actualizado: {pedido} ')
+            self.guardar_presupuesto(pedido)
             self.completers_from_presupuesto()
-            self.status_bar.showMessage('Presupuesto cargado correctamente', 10000)
-            # adding to combo boxes
+            print("med_final_cm_alto text:", self.med_final_cm_alto.text())
+            print("med_ancho_final text:", self.med_final_cm_ancho.text())
             self.trabajos_todos.addItem(pedido['Motivo'])
             self.clientes_combo.addItem(pedido['Cliente'])
             self.presupuestos_pendientes.addItem(pedido['Motivo'])
@@ -1473,23 +1480,47 @@ class MainWindow(qtw.QWidget):
             pedido['med_alto_final'] = self.med_final_cm_alto.text() or ''
             pedido['med_ancho_final'] = self.med_final_cm_ancho.text() or ''
 
-            ### ERROR ERROR ERROR ERROR ###
-            print(str(self.settings.value('PDF_Path')))
             path = self.getPath()
-            orden_trabajo(pedido, path)
+            if path:
+                orden_trabajo(pedido, path)
+            else:
+                raise ValueError('No se seleccionó una dirección válida para el PDF.')
         except Exception as e:
-            self.status_bar.showMessage('No se encontró el directorio.', 10000)
-            # settings = qtc.QSettings('Arte & Arquitectura', 'Gestor Arte & Arquitectura')
-            path = qtw.QFileDialog.getExistingDirectory(self,
-                                                        'Guardar PDF',
-                                                        qtc.QDir.currentPath(),
-                                                        qtw.QFileDialog.ShowDirsOnly |
-                                                        qtw.QFileDialog.DontResolveSymlinks)
+            self.handle_pdf_path_error(e, pedido)
+
+        self.borrar_formulario()
+
+    def get_item_details(self, producto):
+        """Retrieve item details from productos based on the product name."""
+        item_name = \
+        self.productos.loc[self.productos['DenominaciónCompleta'] == producto, 'DenominaciónCompleta'].values[0]
+        item_id = self.productos.loc[self.productos['DenominaciónCompleta'] == producto, 'Contador'].values[0]
+        return item_name, item_id
+
+    def add_empty_item(self, pedido, count, p_unit):
+        """Add an empty item to the pedido dictionary."""
+        pedido[f'CCProducto{count}'] = 0
+        pedido[f'ctpreciouni{count}'] = 0
+        pedido[f'p_unitario{count}'] = p_unit
+
+    def guardar_presupuesto(self, pedido):
+        print('guarda_presupuesto started')
+        dict_for_df = {key: value for key, value in pedido.items() if 'p_unitario' not in key}
+        new_df = pd.DataFrame([dict_for_df])
+        self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
+        self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+        print('guardado')
+
+    def handle_pdf_path_error(self, error, pedido):
+        """Handle errors that occur during processing."""
+        self.status_bar.showMessage('No se encontró el directorio.', 10000)
+        path = self.getPath()  # Attempt to get a valid path
+        if path:
             self.settings.setValue('PDF_Path', path)
             orden_trabajo(pedido, path)
             self.status_bar.showMessage('PDF de orden generado.', 10000)
-
-        self.borrar_formulario()
+        else:
+            self.status_bar.showMessage('Dirección no válida para PDF.', 10000)
 
     @qtc.pyqtSlot()
     def completar_trabajo(self):
