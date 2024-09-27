@@ -7,7 +7,6 @@ import pandas as pd
 import csv
 import time
 import traceback
-
 from pdf import generate, orden_trabajo
 
 start = time.perf_counter()
@@ -51,7 +50,7 @@ class CargarStock(qtw.QDialog):
 
     signalItemCargado = qtc.pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self, dataframe):
         super().__init__()
         print('hey')
         self.setWindowIcon(QIcon('png_aya.png'))
@@ -101,11 +100,11 @@ class CargarStock(qtw.QDialog):
         # self.material.addItems(['Pino', 'Algarrobo'])
 
         # cargar datos
-
-        self.cargar_csv('database/DB/productos.csv')
+        self.stock = dataframe
+        # self.cargar_csv('database/DB/productos.csv')
         print('se cargo')
 
-        self.lista_categorias = self.stock['IdCategoría'].dropna().astype(str).unique() # hacer 1 de estos para el tipo de articulo y otro para el tipo de calculo
+        self.lista_categorias = self.stock['IdCategoría'].dropna().astype(str).unique()
         self.lista_medidas = self.stock['Medida'].dropna().astype(str).unique()
 
         self.idcategoria.clear()
@@ -125,6 +124,10 @@ class CargarStock(qtw.QDialog):
         self.completer_medida.setCaseSensitivity(qtc.Qt.CaseInsensitive)
         self.completer_medida.setFilterMode(qtc.Qt.MatchContains)
         self.medida.setCompleter(self.completer_medida)
+
+        for completer in [self.completer_tipo, self.completer_medida]:
+            self.style_completer_popup(completer)
+
 
         self.signalItemCargado.connect(self.msg_display)
 
@@ -156,7 +159,15 @@ class CargarStock(qtw.QDialog):
         completer = qtw.QCompleter(subset, self)
         completer.setFilterMode(qtc.Qt.MatchContains)
         completer.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        self.modelo.setCompleter(completer)
+        self.medida.setCompleter(completer)
+
+    def style_completer_popup(self, completer):
+        """Apply styling to the completer popup."""
+        completer.popup().setStyleSheet(
+            "color: white; font-size: 13pt;"
+            "selection-background-color: #FF9B99;"
+            "selection-color: solidblack;")
+
 
     def cargar(self):
         id_categoria = self.idcategoria.currentText()
@@ -956,17 +967,19 @@ class MainWindow(qtw.QWidget):
                             self.combo8]
 
     def load_data_thread(self):
-        """Load product data in a separate thread."""
+        """Cargar la data de productos en un thread aparte.
+        Aumenta significativamente la velocidad de booteo"""
         worker = Worker(self.cargar_data_productos)
         worker.signals.result.connect(self.on_data_loaded)
         self.threadpool.start(worker)
 
     def on_data_loaded(self, productos):
-        """Handle the result of loading data."""
+        """Manejar los procesos luego de la carga de datos."""
         self.productos = productos
         self.setup_comboboxes()
         self.style_sheet_completers()
         self.connect_comboboxes()
+        # Ubicar según necesidad inicializaciones adicionales o actualizaciones acá.
 
     def cargar_data_productos(self):
         """
@@ -1091,7 +1104,6 @@ class MainWindow(qtw.QWidget):
     # Completer initiator
     def completers_from_presupuesto(self):
         """Iniciar y actualizar completers desde la base de datos de presupuestos"""
-
         try:
             presupuesto = pd.read_csv(
                 'database/DB/presupuestos_limpio.csv')
@@ -1130,6 +1142,7 @@ class MainWindow(qtw.QWidget):
 
     # Display
     def message(self, string, method, **kwargs):
+        """Función para display de mensajes informativos."""
         msg = qtw.QMessageBox()
         msg.setWindowIcon(QIcon('png_aya.ico'))
         msg.setText(string)
@@ -1159,7 +1172,7 @@ class MainWindow(qtw.QWidget):
     # Form methods
     @qtc.pyqtSlot()
     def complete_products(self, string, idx):
-        # completa los precios según el producto elegido y los cálculos según las medidas
+        """completa los precios según el producto elegido y los cálculos según las medidas"""
         subset = self.productos[
             self.productos['DenominaciónCompleta'] == string]
         row, column, cols, rows = self.grid2.getItemPosition(idx)
@@ -1175,8 +1188,6 @@ class MainWindow(qtw.QWidget):
             p_unit.setText(str(subset.loc[:, 'PrecioUnidad'].values[0]))
         except Exception as e:
             pass
-
-
 
     @qtc.pyqtSlot()
     def restaurar_lista_trabajos(self):
@@ -1709,13 +1720,12 @@ class MainWindow(qtw.QWidget):
 
     def cargar_producto(self):
         print('inicio función')
-        self.ventana_carga = CargarStock()
+        self.ventana_carga = CargarStock(self.productos)
         try:
             self.ventana_carga.exec_()
         except Exception as e:
             print(e)
         print('final función')
-
 
 
 stylesheet = '''
