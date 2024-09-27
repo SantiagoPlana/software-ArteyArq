@@ -2,7 +2,7 @@ import sys
 import os
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
-from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon
+from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon, QFont
 import pandas as pd
 import csv
 import time
@@ -966,6 +966,9 @@ class MainWindow(qtw.QWidget):
         self.combo_boxes = [self.combo1, self.combo2, self.combo3, self.combo4, self.combo5, self.combo6, self.combo7,
                             self.combo8]
 
+
+
+
     def load_data_thread(self):
         """Cargar la data de productos en un thread aparte.
         Aumenta significativamente la velocidad de booteo"""
@@ -977,8 +980,10 @@ class MainWindow(qtw.QWidget):
         """Manejar los procesos luego de la carga de datos."""
         self.productos = productos
         self.setup_comboboxes()
+        self.style_sheet_comboboxes()
         self.style_sheet_completers()
         self.connect_comboboxes()
+
         # Ubicar según necesidad inicializaciones adicionales o actualizaciones acá.
 
     def cargar_data_productos(self):
@@ -1055,6 +1060,12 @@ class MainWindow(qtw.QWidget):
 
         return completer
 
+    def style_sheet_comboboxes(self):
+        for combobox in self.combo_boxes:
+            combobox.setStyleSheet('''QComboBox { 
+                        font-size: 13pt;
+                        color: black;''')
+
     def style_sheet_completers(self):
         for completer in self.completers:
             completer.popup().setStyleSheet("color: white; font-size: 13pt;"
@@ -1117,7 +1128,6 @@ class MainWindow(qtw.QWidget):
         except Exception as e:
             # Handle error in loading presupuesto data
             self.status_bar.showMessage(f'Error al cargar presupuestos: {str(e)}', 10000)
-
 
     def crear_completer(self, data):
         completer = qtw.QCompleter(data, self)
@@ -1785,6 +1795,9 @@ selection-background-color: #FF9B99;
 selection-color: solidblack;
 border-style: solid;
 border-radius: 5px;
+}
+QComboBox QLineEdit {
+font-size: 13px;
 }
 QComboBox:hover {
 border: 1px #FF9B99;
