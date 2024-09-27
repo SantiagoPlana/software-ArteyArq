@@ -207,7 +207,6 @@ class CargarStock(qtw.QDialog):
             except Exception as e:
                 print(e)
 
-
     @qtc.pyqtSlot(str)
     def msg_display(self, string):
         msg = qtw.QMessageBox()
@@ -1736,7 +1735,7 @@ class MainWindow(qtw.QWidget):
             self.ventana_carga.exec_()
         except Exception as e:
             print(e)
-        print('final función')
+        self.load_data_thread()
 
 
 stylesheet = '''
