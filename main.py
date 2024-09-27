@@ -73,10 +73,9 @@ class CargarStock(qtw.QDialog):
         self.idcategoria.setEditable(True)
         self.medida.setEditable(True)
 
-
         self.comboboxes = [self.idcategoria, self.medida]
 
-        self.btn_cargar = qtw.QPushButton('Cargar producto', clicked=self.cargar)
+        self.btn_cargar = qtw.QPushButton('Cargar producto', clicked=self.check_medida)
         self.btn_cancelar = qtw.QPushButton('Cancelar', clicked=self.close)
 
 
@@ -101,8 +100,6 @@ class CargarStock(qtw.QDialog):
 
         # cargar datos
         self.stock = dataframe
-        # self.cargar_csv('database/DB/productos.csv')
-        print('se cargo')
 
         self.lista_categorias = self.stock['IdCategoría'].dropna().astype(str).unique()
         self.lista_medidas = self.stock['Medida'].dropna().astype(str).unique()
@@ -131,9 +128,6 @@ class CargarStock(qtw.QDialog):
 
         self.signalItemCargado.connect(self.msg_display)
 
-        # self.completer_modelo = qtw.QCompleter(self.lista_modelos, self)
-        # self.completer_modelo.setCaseSensitivity(qtc.Qt.CaseInsensitive)
-        # self.modelo.setCompleter(self.completer_modelo)
 
     def cargar_csv(self, path):
         self.stock = pd.read_csv(path, sep=',')
@@ -168,6 +162,15 @@ class CargarStock(qtw.QDialog):
             "selection-background-color: #FF9B99;"
             "selection-color: solidblack;")
 
+    def check_medida(self):
+        medida = self.medida.currentText()
+        medida = medida.strip(' ').upper()
+        print(medida)
+        if medida not in self.lista_medidas:
+            string = 'Medida no válida. Seleccione una de las cuatro existentes.'
+            self.msg_display(string)
+        else:
+            self.cargar()
 
     def cargar(self):
         id_categoria = self.idcategoria.currentText()
@@ -965,8 +968,6 @@ class MainWindow(qtw.QWidget):
 
         self.combo_boxes = [self.combo1, self.combo2, self.combo3, self.combo4, self.combo5, self.combo6, self.combo7,
                             self.combo8]
-
-
 
 
     def load_data_thread(self):
