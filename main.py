@@ -7,6 +7,8 @@ import pandas as pd
 import csv
 import time
 import traceback
+
+from PyQt5.QtWidgets import QMessageBox
 from pdf import generate, orden_trabajo
 
 start = time.perf_counter()
@@ -1152,7 +1154,7 @@ class MainWindow(qtw.QWidget):
 
     # Display
     def message(self, string, method, **kwargs):
-        """Función para display de mensajes informativos."""
+        """Función para display de diálogo para selección entre generar orden y guardar pdf."""
         msg = qtw.QMessageBox()
         msg.setWindowIcon(QIcon('png_aya.ico'))
         msg.setText(string)
@@ -1175,9 +1177,19 @@ class MainWindow(qtw.QWidget):
                 self.status_bar.showMessage('Error processing the request.', 10000)
         elif ret == qtw.QMessageBox.Save:
             # método para exportar PDF / imprimir presupuesto sin guardarlo
-            self.generar_pdf()
+            check = self.checkpoint_datos_esenciales()
+            if check:
+                self.generar_pdf()
         else:
             msg.close()
+
+    def warning_message(self, string):
+        message = string
+        msg = qtw.QMessageBox()
+        msg.setText(message)
+        msg.setIcon(qtw.QMessageBox.Warning)
+        msg.setWindowTitle('Datos insuficientes')
+        msg.exec_()
 
     # Form methods
     @qtc.pyqtSlot()
@@ -1340,7 +1352,26 @@ class MainWindow(qtw.QWidget):
                 else:  # lineEdits de "otros"
                     if len(item.text()) == 0 and len(item.objectName()) != 0:
                         item.setText('S/D')
+
         self.cargar_venta()
+
+    def checkpoint_datos_esenciales(self):
+        """Revisa campos esenciales (Cliente, Motivo, Medidas, y que haya al menos un producto seleccionado
+        antes de continuar con la venta o generación de PDF."""
+        count = 0
+        for cb in self.combo_boxes:
+            line_edit = cb.lineEdit()
+            if line_edit and line_edit.text().strip() == '':
+                count += 1
+        if count == 8:
+            message = "Ningún producto seleccionado."
+            self.warning_message(message)
+        elif not self.cliente.text() or not self.motivo.toPlainText() or not self.med_orig_cm_alto.text() \
+            or not self.med_orig_cm_ancho.text():
+            message = "Campos esenciales vacíos. Revise el formulario."
+            self.warning_message(message)
+        else:
+            return True
 
     def preparar_dic_datos(self):
         cto1 = self.med_orig_cm_ancho.text().replace(',', '.')
