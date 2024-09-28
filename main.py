@@ -7,6 +7,7 @@ import pandas as pd
 import csv
 import time
 import traceback
+import datetime
 
 from PyQt5.QtWidgets import QMessageBox
 from pdf import generate, orden_trabajo
@@ -557,7 +558,7 @@ class MainWindow(qtw.QWidget):
         self.setFixedWidth(1600)
         self.setFixedHeight(900)
         # self.resize(200, 500)
-
+        self.fecha = datetime.datetime.now().date().strftime('%d-%m-%Y')
         # setup barra de menu y sus botones
         self.menu = qtw.QMenuBar(objectName='menu')
         self.menu.addAction('Abrir tabla productos', self.abrir_tabla_productos)
@@ -951,7 +952,7 @@ class MainWindow(qtw.QWidget):
         self.sup_m2 = qtw.QLineEdit()
         self.per_ml = qtw.QLineEdit()
 
-        self.fecha_rec = qtw.QLineEdit(objectName='fecha_recepción')
+        self.fecha_rec = qtw.QLineEdit(self.fecha, objectName='fecha_recepción')
         self.fecha_entrega = qtw.QLineEdit(objectName='fecha_entrega')
         self.fecha_realizacion = qtw.QLineEdit(objectName='fecha_realización')
 
@@ -1170,11 +1171,13 @@ class MainWindow(qtw.QWidget):
         ret = msg.exec_()
 
         if ret == qtw.QMessageBox.Ok:
-            try:
-                method.__call__()
-            except Exception as e:
-                print(f"Error in method call: {str(e)}")  # Log the specific error
-                self.status_bar.showMessage('Error processing the request.', 10000)
+            check = self.checkpoint_datos_esenciales()
+            if check:
+                try:
+                    method.__call__()
+                except Exception as e:
+                    print(f"Error in method call: {str(e)}")  # Log the specific error
+                    self.status_bar.showMessage('Error processing the request.', 10000)
         elif ret == qtw.QMessageBox.Save:
             # método para exportar PDF / imprimir presupuesto sin guardarlo
             check = self.checkpoint_datos_esenciales()
@@ -1602,6 +1605,7 @@ class MainWindow(qtw.QWidget):
             self.med_final_cm_ancho.setText('0')        # Setea valores por defecto
             self.med_final_cm_alto.setText('0')         # ! Setear fecha
             self.cantidad.setText('1')
+            self.fecha_rec.setText(self.fecha)
             self.display_total()
             if isinstance(self.sender(), qtw.QPushButton):
                 # restaura lista original de trabajos
