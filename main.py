@@ -2,7 +2,9 @@ import sys
 import os
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
-from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon, QFont
+from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon, QFont, QPainter
+# from PyQt5.QtPdf import QPdfDocument
+from pdf2image import convert_from_path
 import pandas as pd
 import csv
 import time
@@ -1502,12 +1504,52 @@ class MainWindow(qtw.QWidget):
             if path:
                 orden_trabajo(pedido, path)
                 self.status_bar.showMessage('PDF DE ORDEN GUARDADO CORRECTAMENTE', 10000)
+                try:
+                    self.printPDF(path)
+                except Exception as e:
+                    print(e)
             else:
                 raise ValueError('No se seleccionó una dirección válida para el PDF.')
         except Exception as e:
             self.handle_pdf_path_error(e, pedido)
 
         self.borrar_formulario()
+
+    def printPDF_deprecated(self, pdf_path):
+        if not os.path.exists(pdf_path):
+            qtw.QMessageBox.warning(self, 'Error', 'El archivo PDF no existe.')
+            return
+
+        printer = qtw.QPrinter()
+        printer.setPageSize(qtw.QPrinter.A4)
+        printer.setOrientation(qtw.QPrinter.Landscape)
+
+        # Open the PDF for printing
+        painter = qtg.QPainter(printer)
+        painter.setRenderHint(qtg.QPainter.Antialiasing)
+
+        # Load the PDF and print it
+        document = qtw.QPdfDocument()
+        document.load(pdf_path)
+        document.render(painter)
+
+        painter.end()
+        qtw.QMessageBox.information(self, 'Info', 'PDF enviado a la impresora.')
+
+    def printPDF(self, pdf_path):
+        if not os.path.exists(pdf_path):
+            qtw.QMessageBox.warning(self, 'Error', 'El archivo PDF no existe.')
+            return
+
+        images = convert_from_path(pdf_path)
+        printer = QPrinter(QPrinter.HighResolution)
+
+        for image in images:
+            painter = QPainter(printer)
+            painter.drawImage(0, 0, QImage(image))
+            painter.end()
+
+        qtw.QMessageBox.information(self, 'Info', 'PDF enviado a la impresora.')
 
     def get_item_details(self, producto):
         """Extraer los detalles según el nombre del item.
