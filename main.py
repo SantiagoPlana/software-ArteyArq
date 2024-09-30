@@ -2,9 +2,11 @@ import sys
 import os
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
-from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon, QFont, QPainter
+from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon, QFont, QPainter, QImage
+from PyQt5.QtPrintSupport import QPrinter
 # from PyQt5.QtPdf import QPdfDocument
 from pdf2image import convert_from_path
+import subprocess
 import pandas as pd
 import csv
 import time
@@ -1455,8 +1457,12 @@ class MainWindow(qtw.QWidget):
             pedido['med_ancho_final'] = self.med_final_cm_ancho.text() or ''
             path = self.getPath()
             if path:
-                generate(pedido, path)
+                nombre_pdf = generate(pedido, path)
                 self.status_bar.showMessage('PRESUPUESTO GENERADO.', 10000)
+                try:
+                    self.printPDF(nombre_pdf)
+                except Exception as e:
+                    print(e)
         except Exception as e:
             self.handle_pdf_path_error(e, pedido)
         self.borrar_formulario()
@@ -1502,10 +1508,10 @@ class MainWindow(qtw.QWidget):
 
             path = self.getPath()            # Método para obtener el directorio de guardado
             if path:
-                orden_trabajo(pedido, path)
+                nombre_pdf = orden_trabajo(pedido, path)
                 self.status_bar.showMessage('PDF DE ORDEN GUARDADO CORRECTAMENTE', 10000)
                 try:
-                    self.printPDF(path)
+                    self.printPDF(nombre_pdf)
                 except Exception as e:
                     print(e)
             else:
@@ -1536,20 +1542,40 @@ class MainWindow(qtw.QWidget):
         painter.end()
         qtw.QMessageBox.information(self, 'Info', 'PDF enviado a la impresora.')
 
-    def printPDF(self, pdf_path):
+    def printPDF_poppler(self, pdf_path):
         if not os.path.exists(pdf_path):
             qtw.QMessageBox.warning(self, 'Error', 'El archivo PDF no existe.')
             return
+        try:
+            images = convert_from_path(pdf_path)
+            if not images:
+                print("No images were created from the PDF.")
+                return
 
-        images = convert_from_path(pdf_path)
-        printer = QPrinter(QPrinter.HighResolution)
+            printer = QPrinter(QPrinter.HighResolution)
 
-        for image in images:
-            painter = QPainter(printer)
-            painter.drawImage(0, 0, QImage(image))
-            painter.end()
+            for image in images:
+                painter = QPainter(printer)
+                painter.drawImage(0, 0, QImage(image))
+                painter.end()
 
-        qtw.QMessageBox.information(self, 'Info', 'PDF enviado a la impresora.')
+            qtw.QMessageBox.information(self, 'Info', 'PDF enviado a la impresora.')
+
+        except Exception as e:
+            qtw.QMessageBox.critical(self, 'Error', str(e))
+
+    def printPDF(self, pdf_path):
+        """Abre el PDF generado en el visor de PDFs default del sistema para imprimir rápidamente."""
+        if not os.path.exists(pdf_path):
+            qtw.QMessageBox.warning(self, 'Error', 'El archivo PDF no existe.')
+            return
+        try:
+            if sys.platform.startswith('win'):
+                subprocess.Popen([pdf_path], shell=True)  # Opens with default viewer on Windows
+
+            qtw.QMessageBox.information(self, 'Info', 'PDF enviado a la impresora.')
+        except Exception as e:
+            qtw.QMessageBox.critical(self, 'Error', f"Error opening PDF: {str(e)}")
 
     def get_item_details(self, producto):
         """Extraer los detalles según el nombre del item.
