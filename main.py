@@ -553,11 +553,10 @@ class MainWindow(qtw.QWidget):
         self.threadpool = qtc.QThreadPool()
         # self.cargar_data_productos()
         self.load_data_thread()
-        # self.center()
 
         self.setFixedWidth(1600)
         self.setFixedHeight(900)
-        # self.resize(200, 500)
+        # self.resize(1000, 900)
         self.fecha = datetime.datetime.now().date().strftime('%d-%m-%Y')
         # setup barra de menu y sus botones
         self.menu = qtw.QMenuBar(objectName='menu')
@@ -675,6 +674,7 @@ class MainWindow(qtw.QWidget):
             (self.trabajos_todos, 2, 4),
             (qtw.QLabel('Trabajos (este año)'), 3, 3),
             (self.trabajos_año, 3, 4),
+            (qtw.QSpacerItem(10, 20), 4, 0),
         ])
 
         # Adding grid2
@@ -1085,6 +1085,7 @@ class MainWindow(qtw.QWidget):
 
     # Reporte pdf
     def getPath(self):
+        path = None
         if 'PDF_Path' in self.settings.allKeys():
             # generate(dic, settings.value('PDF_Path'))
             path = self.settings.value('PDF_Path')
@@ -1092,14 +1093,14 @@ class MainWindow(qtw.QWidget):
                 qtw.QMessageBox.warning(self, 'Guarda loco', 'Dirección inválida. Elija otra.')
                 path = None  # Reset del path para pedir otro
 
-                # Si no se encuentra path válido, pide otro
-            if path is None:
-                path = qtw.QFileDialog.getExistingDirectory(
-                    self,
-                    'Guardar PDF',
-                    qtc.QDir.currentPath(),
-                    qtw.QFileDialog.ShowDirsOnly | qtw.QFileDialog.DontResolveSymlinks
-                )
+        # Si no se encuentra path válido, pide otro
+        if path is None:
+            path = qtw.QFileDialog.getExistingDirectory(
+                self,
+                'Guardar PDF',
+                qtc.QDir.currentPath(),
+                qtw.QFileDialog.ShowDirsOnly | qtw.QFileDialog.DontResolveSymlinks
+            )
         # Si el path es válido, lo guarda
         if path:
             self.settings.setValue('PDF_Path', path)
@@ -1451,38 +1452,24 @@ class MainWindow(qtw.QWidget):
             pedido['med_alto_final'] = self.med_final_cm_alto.text() or ''
             pedido['med_ancho_final'] = self.med_final_cm_ancho.text() or ''
             path = self.getPath()
-            generate(pedido, path)
-            self.status_bar.showMessage('PDF de orden generado.', 10000)
+            if path:
+                generate(pedido, path)
+                self.status_bar.showMessage('PRESUPUESTO GENERADO.', 10000)
         except Exception as e:
-            self.status_bar.showMessage('No se encontró el directorio: ' + str(e), 10000)
-            # settings = qtc.QSettings('Arte & Arquitectura', 'Gestor Arte & Arquitectura')
-            path = qtw.QFileDialog.getExistingDirectory(self,
-                                                        'Guardar PDF',
-                                                        qtc.QDir.currentPath(),
-                                                        qtw.QFileDialog.ShowDirsOnly |
-                                                        qtw.QFileDialog.DontResolveSymlinks)
-            self.settings.setValue('PDF_Path', path)
-            generate(pedido, path)
-            self.status_bar.showMessage('PDF de orden generado.', 10000)
-
+            self.handle_pdf_path_error(e, pedido)
         self.borrar_formulario()
 
     def cargar_venta(self):
         """Cargar toda la información al CSV de presupuestos y generar orden de trabajo en PDF"""
         try:
-            print('checkpoint 0')
             pedido = self.preparar_dic_datos()
-            print(f'diccionario preparado: {pedido}')
             count = 1
             col1 = 1  # columna de nombre
             col2 = 7   # columna de precios
-            item_list = []
-            for row in range(8, 16):
-                print(f'checkpoint 1: processing row {row}')
+            item_list = []  # lista de items para cargar
+            for row in range(8, 16):                 # extrae items por combobox
                 producto = self.grid2.itemAtPosition(row, col1).widget().currentText()
-
                 if producto:
-                    print(f'checkpoint 2: producto found: {producto}')
                     precio = self.grid2.itemAtPosition(row, col2).widget().text()
                     p_unit = self.grid2.itemAtPosition(row, 6).widget().text()
                     # get item id
@@ -1497,15 +1484,11 @@ class MainWindow(qtw.QWidget):
                     item_list.append(item_name)
                     count += 1
                 else:
-                    print(f'checkpoint 3: no producto found in row {row}')
                     p_unit = 0
                     self.add_empty_item(pedido, count, p_unit)
                     count += 1
-            print(f'checkpoint 4. Diccionario actualizado: {pedido} ')
-            self.guardar_presupuesto(pedido)
-            self.completers_from_presupuesto()
-            print("med_final_cm_alto text:", self.med_final_cm_alto.text())
-            print("med_ancho_final text:", self.med_final_cm_ancho.text())
+            self.guardar_presupuesto(pedido)     # Guarda la nueva venta en el csv de presupuesto
+            self.completers_from_presupuesto()   # Resetea los combobox de presupuestos
             self.trabajos_todos.addItem(pedido['Motivo'])
             self.clientes_combo.addItem(pedido['Cliente'])
             self.presupuestos_pendientes.addItem(pedido['Motivo'])
@@ -1515,9 +1498,10 @@ class MainWindow(qtw.QWidget):
             pedido['med_alto_final'] = self.med_final_cm_alto.text() or ''
             pedido['med_ancho_final'] = self.med_final_cm_ancho.text() or ''
 
-            path = self.getPath()
+            path = self.getPath()            # Método para obtener el directorio de guardado
             if path:
                 orden_trabajo(pedido, path)
+                self.status_bar.showMessage('PDF DE ORDEN GUARDADO CORRECTAMENTE', 10000)
             else:
                 raise ValueError('No se seleccionó una dirección válida para el PDF.')
         except Exception as e:
