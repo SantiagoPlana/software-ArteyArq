@@ -30,7 +30,6 @@ class Worker(qtc.QRunnable):
     def __init__(self, fn, *args, **kwargs):
         
         super(Worker, self).__init__()
-        print('initiated')
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
@@ -59,7 +58,6 @@ class CargarStock(qtw.QDialog):
 
     def __init__(self, dataframe):
         super().__init__()
-        print('hey')
         self.setWindowIcon(QIcon('png_aya.png'))
         self.setMinimumSize(260, 310)
         self.setSizeGripEnabled(True)
@@ -118,7 +116,6 @@ class CargarStock(qtw.QDialog):
         self.medida.clear()
         self.medida.addItem('')
         self.medida.addItems(self.lista_medidas)
-        print('se cargo')
         self.completer_tipo = qtw.QCompleter(self.lista_categorias, self)
         self.completer_tipo.setCaseSensitivity(qtc.Qt.CaseInsensitive)
         self.completer_tipo.setFilterMode(qtc.Qt.MatchContains)
@@ -882,7 +879,7 @@ class MainWindow(qtw.QWidget):
         self.btn_pdf.clicked.connect(lambda: self.message(
             string='Presione OK para cargar como venta. \n'
                    'Presione Guardar para guardar detalle de presupuesto',
-            method=lambda: self.cargar_venta(),
+            method=lambda: self.cargar_orden_trabajo(),
             windowTitle='Confirmación',
             icon=qtw.QMessageBox.Question))
         # Marcar trabajo como completo
@@ -974,7 +971,6 @@ class MainWindow(qtw.QWidget):
 
         self.combo_boxes = [self.combo1, self.combo2, self.combo3, self.combo4, self.combo5, self.combo6, self.combo7,
                             self.combo8]
-
 
     def load_data_thread(self):
         """Cargar la data de productos en un thread aparte.
@@ -1187,7 +1183,7 @@ class MainWindow(qtw.QWidget):
             # método para exportar PDF / imprimir presupuesto sin guardarlo
             check = self.checkpoint_datos_esenciales()
             if check:
-                self.generar_pdf()
+                self.generar_presupuesto()
         else:
             msg.close()
 
@@ -1246,6 +1242,7 @@ class MainWindow(qtw.QWidget):
             self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
             self.borrar_formulario()
 
+    # Revisar aquí. Puede estar el problema de la carga de presupuestos y también de cuanado se intenta borrarlos.
     def complete_from_work(self, string, client='', index=0):
         if string and not client:
             if self.sender().objectName() == 'trabajos_pendientes':
@@ -1287,8 +1284,8 @@ class MainWindow(qtw.QWidget):
             self.cliente.setText(subset['Cliente'].values[0])
             self.motivo.setText(subset['Motivo'].values[0])
             self.cantidad.setText(str(int(subset['Cant'].values[0])))
-            self.med_orig_cm_ancho.setText(str(subset['cto1'].values[0]))
-            self.med_orig_cm_alto.setText(str(subset['cto2'].values[0]))
+            self.med_orig_cm_ancho.setText(str(float(subset['cto1'].values[0])))
+            self.med_orig_cm_alto.setText(str(float(subset['cto2'].values[0])))
             self.var.setText(str(subset['ctvar'].values[0]))
             self.pp_cm.setText(str(subset['ctpp'].values[0]))
             self.total.setText(str(subset['Total_General'].values[0]))
@@ -1301,8 +1298,6 @@ class MainWindow(qtw.QWidget):
 
     def completar_productos_from_work(self, subset):
         productos = [col for col in subset.columns if col.startswith('CC')]
-        # precios = [col for col in subset.columns if col.startswith('ctpreciouni')]
-        # num_of_products = len(productos)
         item_row = 8
         for col in productos:
             producto_id = int(subset.loc[:, col].values[0])
@@ -1319,7 +1314,9 @@ class MainWindow(qtw.QWidget):
         item_row = 8
         for col in precios:
             precio = subset.loc[:, col].values[0]
+
             if precio != 0:
+                print(col, precio)
                 try:
                     self.grid2.itemAtPosition(item_row, 6).widget().setText(str(precio))
                     item_row += 1
@@ -1417,7 +1414,7 @@ class MainWindow(qtw.QWidget):
                 print(col, e)
         return pedido
 
-    def generar_pdf(self):
+    def generar_presupuesto(self):
         """Generar un detalle de trabajo en PDF sin cargar los datos al CSV de presupuestos"""
         try:
             pedido = self.preparar_dic_datos()
@@ -1467,7 +1464,7 @@ class MainWindow(qtw.QWidget):
             self.handle_pdf_path_error(e, pedido)
         self.borrar_formulario()
 
-    def cargar_venta(self):
+    def cargar_orden_trabajo(self):
         """Cargar toda la información al CSV de presupuestos y generar orden de trabajo en PDF"""
         try:
             pedido = self.preparar_dic_datos()
@@ -1593,7 +1590,6 @@ class MainWindow(qtw.QWidget):
 
     def guardar_presupuesto(self, pedido):
         """Añade la orden de trabajo (presupuesto) al CSV de presupuestos."""
-        print('guarda_presupuesto started')
         dict_for_df = {key: value for key, value in pedido.items() if 'p_unitario' not in key}
         new_df = pd.DataFrame([dict_for_df])
         self.presupuesto = pd.concat([self.presupuesto, new_df], ignore_index=True)
@@ -1643,33 +1639,69 @@ class MainWindow(qtw.QWidget):
     @qtc.pyqtSlot()
     def borrar_formulario(self):
         """Borra todos los campos de la ventana principal."""
-        try:
-            for i in range(self.grid1.count()):
-                item = self.grid1.itemAt(i).widget()    # Define los elementos en cada grid
-                if isinstance(item, qtw.QComboBox):     # Los limpia si son limpiables básicamente
-                    item.clearEditText()                # según el tipo posible.
-            for i in range(self.grid2.count()):
-                item = self.grid2.itemAt(i).widget()
-                if isinstance(item, qtw.QComboBox):
-                    item.clearEditText()
-                elif isinstance(item, qtw.QLineEdit) or isinstance(item, qtw.QTextEdit):
-                    item.clear()
-            self.med_final_cm_ancho.setText('0')        # Setea valores por defecto
-            self.med_final_cm_alto.setText('0')         # ! Setear fecha
-            self.cantidad.setText('1')
-            self.fecha_rec.setText(self.fecha)
-            self.display_total()
-            if isinstance(self.sender(), qtw.QPushButton):
-                # restaura lista original de trabajos
-                self.trabajos_todos.clear()
-                self.trabajos_todos.addItem('')
-                self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
-        except Exception as e:
-            pass
-        #self.display_p_unitario()
+        self.desconectar_textedits_medidas()
+        for i in range(self.grid1.count()):
+            item = self.grid1.itemAt(i)
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    if isinstance(widget, qtw.QComboBox):
+                        widget.clearEditText()
+
+        print('Primer for loop terminado.')
+        print(self.grid2.count())
+        for i in range(self.grid2.count()):
+            try:
+                item = self.grid2.itemAt(i)
+                print(f'Grabbed item')
+                if item is not None:
+                    widget = item.widget()
+                    print(f'Grabbed widget at index {i}: type{widget}')
+                    if widget is None:
+                        print(f'No widget found for item at index {i}')
+                        continue
+
+                    if isinstance(widget, qtw.QComboBox):
+                        print(
+                            f'Widget {widget.objectName()} - '
+                            f'Enabled: {widget.isEnabled()},'
+                            f' Visible: {widget.isVisible()}')
+
+                        widget.clearEditText()
+                        print(f'Widget {widget.objectName()} cleared')
+                    elif isinstance(widget, (qtw.QLineEdit, qtw.QTextEdit)):
+                        print(
+                            f'Widget {widget.objectName()} - '
+                            f'Enabled: {widget.isEnabled()},'
+                            f' Visible: {widget.isVisible()}')
+                        try:
+                            widget.clear()
+                            print(f'Widget {widget.objectName()} cleared')
+                        except Exception as e:
+                            print(e)
+            except Exception as e:
+                print(f'A ver qué re contra carajo te pasa: {e}')
+        self.reconectar_textedits_medidas()
+        print('Segundo for loop terminado.')
+
+        self.med_final_cm_ancho.setText('0')        # Setea valores por defecto
+        self.med_final_cm_alto.setText('0')         # ! Setear fecha
+        self.cantidad.setText('1')
+        self.fecha_rec.setText(self.fecha)
+        print('Campos rellenados')
+        self.display_total()
+        print('Display total hecho')
+        if isinstance(self.sender(), qtw.QPushButton):
+            # restaura lista original de trabajos
+            print('Restaurando listas')
+            self.trabajos_todos.clear()
+            self.trabajos_todos.addItem('')
+            self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
+            print('Listas restauradas')
 
     def borrar_presupuesto_cargado(self):
         """Borra el presupuesto que se ha cargado desde los comboboxes de la base de datos de presupuestos"""
+        print('Borrando')
         try:
             cliente = self.cliente.text()
             motivo = self.motivo.toPlainText()
@@ -1682,49 +1714,71 @@ class MainWindow(qtw.QWidget):
                 msg.setStandardButtons(qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel)
                 ret = msg.exec_()
                 if ret == qtw.QMessageBox.Ok:
-                    self.presupuesto.drop(index, axis='index', inplace=True)
-                    self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
-                    self.status_bar.showMessage(
-                        f'Se eliminó el trabajo de {cliente} con motivo "{motivo}".', 15000)
-                    self.borrar_formulario()
-                    self.completers_from_presupuesto()
+                    try:
+                        print('Está entre esto...')
+                        self.presupuesto.drop(index, axis='index', inplace=True)
+                        self.presupuesto.to_csv('database/DB/presupuestos_limpio.csv', index=False)
+                        print('...y esto?')
+                        self.status_bar.showMessage(
+                            f'Se eliminó el trabajo de {cliente} con motivo "{motivo}".', 15000)
+                        self.borrar_formulario()
+                        self.completers_from_presupuesto()
+                    except IndexError as e:
+                        print(f'Index Error: {e} ')
                 else:
                     msg.close()
         except Exception as e:
             self.status_bar.showMessage('No, cht.')
+
+    # Signal handling
+    def desconectar_textedits_medidas(self):
+        self.med_orig_cm_ancho.textChanged.disconnect()
+        self.med_orig_cm_alto.textChanged.disconnect()
+        self.pp_cm.textChanged.disconnect()
+        self.var.textChanged.disconnect()
+
+    def reconectar_textedits_medidas(self):
+        self.med_orig_cm_ancho.textChanged.connect(self.calculo_medidas)
+        self.med_orig_cm_alto.textChanged.connect(self.calculo_medidas)
+        self.pp_cm.textChanged.connect(self.calculo_medidas)
+        self.var.textChanged.connect(self.calculo_medidas)
 
     # Cálculos
     # Revisar si se puede mejorar.
     @qtc.pyqtSlot()
     def calculo_medidas(self):
         # medidas originales
-        ancho = self.med_orig_cm_ancho.text().replace(',', '.')
-        alto = self.med_orig_cm_alto.text().replace(',', '.')
-        pp = self.pp_cm.text().replace(',', '.')
-        var = self.var.text().replace(',', '.')
-        lst = [ancho, alto, pp, var]
-        for txt in lst:
-            if len(txt) == 0:
-                lst[lst.index(txt)] = 0
-            else:
-                try:
-                    lst[lst.index(txt)] = float(txt)
-                except Exception as e:
-                    lst[lst.index(txt)] = 0
+        try:
+            ancho = self.med_orig_cm_ancho.text().replace(',', '.')
+            alto = self.med_orig_cm_alto.text().replace(',', '.')
+            pp = self.pp_cm.text().replace(',', '.')
+            var = self.var.text().replace(',', '.')
+            lst = [ancho, alto, pp, var]
+            for i in range(len(lst)):
+                if len(lst[i]) == 0:
+                    lst[i] = 0
+                else:
+                    try:
+                        lst[i] = float(lst[i])
+                    except Exception as e:
+                        lst[i] = 0
+                        print(f'Conversion error for {lst[i]}: {e}')
 
-        final_ancho = lst[0] + (lst[2] * 2) + (lst[3] * 2)
-        final_alto = lst[1] + (lst[2] * 2) + (lst[3] * 2)
-        sup_m2 = final_ancho / 100 * final_alto / 100
-        per_ml = (final_ancho * 2 + final_alto * 2) / 100
+            final_ancho = lst[0] + (lst[2] * 2) + (lst[3] * 2)
+            final_alto = lst[1] + (lst[2] * 2) + (lst[3] * 2)
+            sup_m2 = final_ancho / 100 * final_alto / 100
+            per_ml = (final_ancho * 2 + final_alto * 2) / 100
 
-        sup_m2 = '%.2f' % sup_m2
-        per_ml = '%.2f' % per_ml
-        self.med_final_cm_ancho.setText(str(final_ancho))
-        self.med_final_cm_alto.setText(str(final_alto))
-        self.sup_m2.setText(str(sup_m2))
-        self.per_ml.setText(str(per_ml))
+            sup_m2 = '%.2f' % sup_m2
+            per_ml = '%.2f' % per_ml
+            self.med_final_cm_ancho.setText(str(final_ancho))
+            self.med_final_cm_alto.setText(str(final_alto))
+            self.sup_m2.setText(str(sup_m2))
+            self.per_ml.setText(str(per_ml))
 
-        self.calculo_total(final_ancho, final_alto)
+            self.calculo_total(final_ancho, final_alto)
+        except Exception as e:
+            print(f'Herein lies {e}?')
 
     def calculo_total(self, ancho, alto):
         """Calcula el total unitario para cada item"""
@@ -1816,7 +1870,6 @@ class MainWindow(qtw.QWidget):
         self.tabla.exec_()
 
     def cargar_producto(self):
-        print('inicio función')
         self.ventana_carga = CargarStock(self.productos)
         try:
             self.ventana_carga.exec_()
