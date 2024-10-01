@@ -59,7 +59,7 @@ class CargarStock(qtw.QDialog):
     def __init__(self, dataframe):
         super().__init__()
         self.setWindowIcon(QIcon('png_aya.png'))
-        self.setMinimumSize(260, 310)
+        self.setMinimumSize(500, 410)
         self.setSizeGripEnabled(True)
         self.grid = qtw.QGridLayout()
         self.grid.setSpacing(18)
@@ -161,10 +161,9 @@ class CargarStock(qtw.QDialog):
 
     def style_completer_popup(self, completer):
         """Apply styling to the completer popup."""
-        completer.popup().setStyleSheet(
-            "color: white; font-size: 13pt;"
-            "selection-background-color: #FF9B99;"
-            "selection-color: solidblack;")
+        completer.popup().setStyleSheet("color: white; font-size: 13pt;"
+                                                       "selection-background-color: #7E9EC9;"
+                                                       "selection-color: solidblack;")
 
     def check_medida(self):
         medida = self.medida.currentText()
@@ -890,7 +889,7 @@ class MainWindow(qtw.QWidget):
         # Confirmar trabajo
         # self.btn_pdf.clicked.connect(self.cargar_venta)
         self.btn_pdf.clicked.connect(lambda: self.message(
-            string='Presione OK para cargar como venta. \n'
+            string='Presione OK para generar orden de trabajo. \n'
                    'Presione Guardar para guardar detalle de presupuesto',
             method=lambda: self.cargar_orden_trabajo(),
             windowTitle='Confirmación',
@@ -1902,6 +1901,8 @@ QWidget {background-color: #0B1119;}
 
 QLabel {
 font-size: 15pt;
+font-family: Montserrat;
+font: SemiBold;
 color: #E1F6E0;
 }
 #preciounitario {
@@ -1911,7 +1912,9 @@ background-color: #C1D7D2;
 border-style:outset;
 border-width:3px;
 border-color:#D2F1D0;
-font-size: 17pt;
+font-size: 19pt;
+font-family: Montserrat;
+font: SemiBold;
 
 }
 #preciototal {
@@ -1921,17 +1924,23 @@ background-color: #C1D7D2;
 border-style:outset;
 border-width:3px;
 border-color:#F4F4ED;
-font-size: 17pt;
+font-size: 19pt;
+font-family: Montserrat;
+font: SemiBold;
 }
 QTextEdit {
-font-size: 13pt;
+font-size: 14pt;
+font-family: Montserrat;
+font: Medium;
 border: 1px solid black;
 background-color: #F4F4ED;   
 selection-background-color: #7E9EC9;
 selection-color: solidblack; 
 }
 QLineEdit {
-    font-size: 13pt;
+    font-size: 14pt;
+    font-family: Montserrat;
+    font: Medium; 
     border: 1px solid black;
     background-color: #F4F4ED;   
     selection-background-color: #7E9EC9;
@@ -1943,7 +1952,9 @@ color: #1D1E2C;
 }
 QComboBox {
 subcontrol-origin: padding;
-font-size: 13pt;
+font-size: 14pt;
+font-family: Montserrat;
+font: Medium;
 background-color: #F4F4ED;
 color: black;
 selection-background-color: #7E9EC9;
@@ -1952,7 +1963,9 @@ border-style: solid;
 border-radius: 5px;
 }
 QComboBox QLineEdit {
-font-size: 13px;
+font-size: 14px;
+font-family: Montserrat;
+font: Medium;
 }
 QComboBox:hover {
 border: 1px #7E9EC9;
@@ -1961,8 +1974,8 @@ QComboBox QAbstractItemView {
 color: #F4F4ED;
 }
 QPushButton {
-font-size: 13pt;
-padding: 3px;
+font-size: 15pt;
+padding: 5px;
 color: #F3E5CE;
 background: #0B1119;
 }
