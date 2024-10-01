@@ -161,8 +161,9 @@ class CargarStock(qtw.QDialog):
 
     def style_completer_popup(self, completer):
         """Apply styling to the completer popup."""
-        completer.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                       "selection-background-color: #7E9EC9;"
+        completer.popup().setStyleSheet("color: white; font-family: Montserrat;"
+                                            "font: Medium; font-size: 13pt;"
+                                                       "selection-background-color: #D2F1D0;"
                                                        "selection-color: solidblack;")
 
     def check_medida(self):
@@ -1083,8 +1084,9 @@ class MainWindow(qtw.QWidget):
 
     def style_sheet_completers(self):
         for completer in self.completers:
-            completer.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                       "selection-background-color: #7E9EC9;"
+            completer.popup().setStyleSheet("color: white; font-family: Montserrat;"
+                                            "font: Medium; font-size: 13pt;"
+                                                       "selection-background-color: #D2F1D0;"
                                                        "selection-color: solidblack;")
 
     def connect_comboboxes(self):
@@ -1152,6 +1154,7 @@ class MainWindow(qtw.QWidget):
         self.style_completer_popup(completer)
         return completer
 
+    # Printear las sheets de estos completers. No entiendo como siguen teniendo rosado...
     def set_completers(self):
         """Set completers to the respective combo boxes."""
         self.trabajos_todos.setCompleter(self.completer_trabajos)
@@ -1162,8 +1165,8 @@ class MainWindow(qtw.QWidget):
         """Apply styling to the completer popup."""
         completer.popup().setStyleSheet(
             "color: white; font-size: 13pt;"
-            "selection-background-color: #FF9B99;"
-            "selection-color: solidblack;"
+            "selection-background-color: #A5E3A0;"
+            "selection-color: red;"
         )
 
     # Display
@@ -1894,7 +1897,7 @@ stylesheet = '''
 #titulo {
 color: #D2F1D0;
 font: Italic;
-font-size: 32pt;
+font-size: 35pt;
 font-family: Montserrat;
 }
 QWidget {background-color: #0B1119;}
@@ -1934,7 +1937,7 @@ font-family: Montserrat;
 font: Medium;
 border: 1px solid black;
 background-color: #F4F4ED;   
-selection-background-color: #7E9EC9;
+selection-background-color: #D2F1D0;
 selection-color: solidblack; 
 }
 QLineEdit {
@@ -1943,7 +1946,7 @@ QLineEdit {
     font: Medium; 
     border: 1px solid black;
     background-color: #F4F4ED;   
-    selection-background-color: #7E9EC9;
+    selection-background-color: #D2F1D0;
     selection-color: solidblack; 
 }
 QLineEdit:!enabled {
@@ -1957,18 +1960,18 @@ font-family: Montserrat;
 font: Medium;
 background-color: #F4F4ED;
 color: black;
-selection-background-color: #7E9EC9;
+selection-background-color: #D2F1D0;
 selection-color: solidblack;
 border-style: solid;
 border-radius: 5px;
 }
 QComboBox QLineEdit {
-font-size: 14px;
+font-size: 13px;
 font-family: Montserrat;
 font: Medium;
 }
 QComboBox:hover {
-border: 1px #7E9EC9;
+border: 1px #D2F1D0;
 }
 QComboBox QAbstractItemView {
 color: #F4F4ED;
