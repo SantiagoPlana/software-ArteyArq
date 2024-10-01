@@ -379,14 +379,27 @@ class Tabla(qtw.QDialog):
 
         #self.table.resizeColumnsToContents()
         # style
-        self.table.setStyleSheet('alternate-background-color: lightgray;  background-color: white;'
-                                 'font-size: 12pt; selection-background-color: #FF9B99; ')
-        self.menubar.setStyleSheet('spacing: 3px; font-size: 10pt; color: #F3E5CE;')
-        self.menu_archivo.setStyleSheet('selection-background-color: #FF9B99; color: white; '
-                                        'font-size: 10pt;')
-        self.menu_editar.setStyleSheet('selection-background-color: #FF9B99; color: white; '
-                                        'font-size: 10pt;')
+        self.table.setStyleSheet('alternate-background-color: #C1D7D2;  background-color: #F4F4ED;'
+                                 'font-size: 12pt; selection-background-color: #7E9EC9; ')
+        menu_style = '''
+        QMenu {
+        background-color: #C1D7D2; /* Background color of the menu */
+        }
+        QMenu::item {
+        padding: 5px 10px; /* Padding for each action */
+        color: #0B1119; /* Default text color for actions */
+        }
+        QMenu::item:selected {
+            background-color: #C1D7D2; /* Background for selected action */
+            color: #E1F6E0; /* Text color for selected action */
+        }        
+    '''
+        self.menubar.setStyleSheet('''spacing: 3px; font-size: 10pt; color: #E1F6E0; ''')
 
+        #self.menu_archivo.setStyleSheet('''selection-background-color:#C1D7D2; color: #E1F6E0;font-size: 10pt; ''')
+        #self.menu_editar.setStyleSheet('selection-background-color: #C1D7D2; color: #E1F6E0;font-size: 10pt;')
+        self.menu_archivo.setStyleSheet(menu_style)
+        self.menu_editar.setStyleSheet(menu_style)
 
         if self.db.split('/')[-1] == 'productos.csv':
             self.filtro.setCurrentIndex(8)
@@ -569,12 +582,12 @@ class MainWindow(qtw.QWidget):
         self.status_bar = qtw.QStatusBar()
 
         # Título y logo
-        self.title = qtw.QLabel('Presupuesto', objectName='titulo')
+        self.title = qtw.QLabel('Arte & Arquitectura', objectName='titulo')
         self.title.setAlignment(qtc.Qt.AlignTop)
 
-        self.logo = QPixmap('png_aya.png')
+        self.logo = QPixmap('png_aya_blanco.png')
         self.image = qtw.QLabel(self)
-        scaled_pixmap = self.logo.scaled(120, 120, qtc.Qt.KeepAspectRatio)
+        scaled_pixmap = self.logo.scaled(130, 130, qtc.Qt.KeepAspectRatio)
         self.image.setPixmap(scaled_pixmap)
         self.image.setAlignment(qtc.Qt.AlignRight)
 
@@ -1072,7 +1085,7 @@ class MainWindow(qtw.QWidget):
     def style_sheet_completers(self):
         for completer in self.completers:
             completer.popup().setStyleSheet("color: white; font-size: 13pt;"
-                                                       "selection-background-color: #FF9B99;"
+                                                       "selection-background-color: #7E9EC9;"
                                                        "selection-color: solidblack;")
 
     def connect_comboboxes(self):
@@ -1648,17 +1661,17 @@ class MainWindow(qtw.QWidget):
                     if isinstance(widget, qtw.QComboBox):
                         widget.clearEditText()
 
-        print('Primer for loop terminado.')
-        print(self.grid2.count())
+        # print('Primer for loop terminado.')
+        # print(self.grid2.count())
         for i in range(self.grid2.count()):
             try:
                 item = self.grid2.itemAt(i)
-                print(f'Grabbed item')
+                # print(f'Grabbed item')
                 if item is not None:
                     widget = item.widget()
-                    print(f'Grabbed widget at index {i}: type{widget}')
+                    # print(f'Grabbed widget at index {i}: type{widget}')
                     if widget is None:
-                        print(f'No widget found for item at index {i}')
+                        # print(f'No widget found for item at index {i}')
                         continue
 
                     if isinstance(widget, qtw.QComboBox):
@@ -1676,28 +1689,28 @@ class MainWindow(qtw.QWidget):
                             f' Visible: {widget.isVisible()}')
                         try:
                             widget.clear()
-                            print(f'Widget {widget.objectName()} cleared')
+                            # print(f'Widget {widget.objectName()} cleared')
                         except Exception as e:
                             print(e)
             except Exception as e:
-                print(f'A ver qué re contra carajo te pasa: {e}')
+                print(f'A ver qué te pasa: {e}')
         self.reconectar_textedits_medidas()
-        print('Segundo for loop terminado.')
+        # print('Segundo for loop terminado.')
 
         self.med_final_cm_ancho.setText('0')        # Setea valores por defecto
         self.med_final_cm_alto.setText('0')         # ! Setear fecha
         self.cantidad.setText('1')
         self.fecha_rec.setText(self.fecha)
-        print('Campos rellenados')
-        self.display_total()
+        # print('Campos rellenados')
+        # self.display_total()
         print('Display total hecho')
         if isinstance(self.sender(), qtw.QPushButton):
             # restaura lista original de trabajos
-            print('Restaurando listas')
+            # print('Restaurando listas')
             self.trabajos_todos.clear()
             self.trabajos_todos.addItem('')
             self.trabajos_todos.addItems(sorted(self.presupuesto.loc[:, 'Motivo']))
-            print('Listas restauradas')
+            # print('Listas restauradas')
 
     def borrar_presupuesto_cargado(self):
         """Borra el presupuesto que se ha cargado desde los comboboxes de la base de datos de presupuestos"""
@@ -1880,58 +1893,60 @@ class MainWindow(qtw.QWidget):
 
 stylesheet = '''
 #titulo {
-color: #FF9B99;
-font: bold;
-font-size: 25pt;
-font-family: Trebuchet MS;
+color: #D2F1D0;
+font: Italic;
+font-size: 32pt;
+font-family: Montserrat;
 }
-QWidget {background-color: #2F5260;}
+QWidget {background-color: #0B1119;}
 
 QLabel {
 font-size: 15pt;
-color: #F3E5CE;
+color: #E1F6E0;
 }
 #preciounitario {
+color: #0B1119 ;
 border: 3px solid gray;
-background-color: #5C7070;
+background-color: #C1D7D2;
 border-style:outset;
 border-width:3px;
-border-color:ivory;
+border-color:#D2F1D0;
 font-size: 17pt;
 
 }
 #preciototal {
+color: #0B1119 ;
 border: 3px solid gray;
-background-color: #5C7070;
+background-color: #C1D7D2;
 border-style:outset;
 border-width:3px;
-border-color:ivory;
+border-color:#F4F4ED;
 font-size: 17pt;
 }
 QTextEdit {
 font-size: 13pt;
 border: 1px solid black;
-background-color: ivory;   
-selection-background-color: #FF9B99;
+background-color: #F4F4ED;   
+selection-background-color: #7E9EC9;
 selection-color: solidblack; 
 }
 QLineEdit {
     font-size: 13pt;
     border: 1px solid black;
-    background-color: ivory;   
-    selection-background-color: #FF9B99;
+    background-color: #F4F4ED;   
+    selection-background-color: #7E9EC9;
     selection-color: solidblack; 
 }
 QLineEdit:!enabled {
-background-color: #BCC8C8;
+background-color: #C1D7D2;
 color: #1D1E2C;
 }
 QComboBox {
 subcontrol-origin: padding;
 font-size: 13pt;
-background-color: ivory;
+background-color: #F4F4ED;
 color: black;
-selection-background-color: #FF9B99;
+selection-background-color: #7E9EC9;
 selection-color: solidblack;
 border-style: solid;
 border-radius: 5px;
@@ -1940,20 +1955,21 @@ QComboBox QLineEdit {
 font-size: 13px;
 }
 QComboBox:hover {
-border: 1px #FF9B99;
+border: 1px #7E9EC9;
 }
 QComboBox QAbstractItemView {
-color: white;
+color: #F4F4ED;
 }
 QPushButton {
 font-size: 13pt;
 padding: 3px;
 color: #F3E5CE;
+background: #0B1119;
 }
-QPushButton:hover {background: #A23E48;}
-#menu {spacing: 3px; font-size: 10pt; color: #F3E5CE;}
+QPushButton:hover {background: #E1F6E0; color: #0B1119;}
+#menu {spacing: 3px; font-size: 11pt; color: #E1F6E0;}
 #menu::item {padding: 1px 4px; background: transparent; border-radius: 6px;}
-#menu::item:selected {background: #FF9B99;}
+#menu::item:selected {background: #E1F6E0; color: #0B1119}
 
 '''
 
