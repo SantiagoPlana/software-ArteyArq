@@ -1,5 +1,7 @@
 import sys
 import os
+from errno import ECHILD
+
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon, QFont, QPainter, QImage
@@ -1291,32 +1293,36 @@ class MainWindow(qtw.QWidget):
             except Exception as e:
                 print(e)
         elif string and client:
-            self.borrar_formulario()
-            self.clientes_combo.setCurrentText(client)
-            subset = self.presupuesto[(self.presupuesto['Motivo'] == string) & (self.presupuesto['Cliente'] == client)]
-            self.fecha_rec.setText(subset['F_Recepción'].values[0])
-            self.fecha_entrega.setText(subset['F_Entrega'].values[0])
-            self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
-            self.cliente.setText(subset['Cliente'].values[0])
-            self.motivo.setText(subset['Motivo'].values[0])
-            self.cantidad.setText(str(int(subset['Cant'].values[0])))
-            self.med_orig_cm_ancho.setText(str(float(subset['cto1'].values[0])))
-            self.med_orig_cm_alto.setText(str(float(subset['cto2'].values[0])))
-            self.var.setText(str(subset['ctvar'].values[0]))
-            self.pp_cm.setText(str(subset['ctpp'].values[0]))
-            self.total.setText(str(subset['Total_General'].values[0]))
-            self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
+            if self.sender().objectName() == 'trabajos_todos':
+                self.borrar_formulario()
+            try:
+                self.clientes_combo.setCurrentText(client)
+                subset = self.presupuesto[(self.presupuesto['Motivo'] == string) & (self.presupuesto['Cliente'] == client)]
+                self.fecha_rec.setText(subset['F_Recepción'].values[0])
+                self.fecha_entrega.setText(subset['F_Entrega'].values[0])
+                self.fecha_realizacion.setText(subset['F_Realizacion'].values[0])
+                self.cliente.setText(subset['Cliente'].values[0])
+                self.motivo.setText(subset['Motivo'].values[0])
+                self.cantidad.setText(str(int(subset['Cant'].values[0])))
+                self.med_orig_cm_ancho.setText(str(float(subset['cto1'].values[0])))
+                self.med_orig_cm_alto.setText(str(float(subset['cto2'].values[0])))
+                self.var.setText(str(subset['ctvar'].values[0]))
+                self.pp_cm.setText(str(subset['ctpp'].values[0]))
+                self.total.setText(str(subset['Total_General'].values[0]))
+                self.punit.setText(str(float(self.total.text()) / float(self.cantidad.text())))
 
-            self.completar_precios(subset)
-            self.completar_productos_from_work(subset)
-            self.completar_otros_items(subset)
-            self.completar_otros_precios(subset)
+                self.completar_precios(subset)
+                self.completar_productos_from_work(subset)
+                self.completar_otros_items(subset)
+                self.completar_otros_precios(subset)
+            except Exception as e:
+                print(f'Um, except: {e}')
 
     def completar_productos_from_work(self, subset):
         productos = [col for col in subset.columns if col.startswith('CC')]
         item_row = 8
         for col in productos:
-            producto_id = int(subset.loc[:, col].values[0])
+            producto_id = float(subset.loc[:, col].values[0])
             if producto_id != 0:
                 item = self.productos[
                     self.productos['Contador'] == producto_id]['DenominaciónCompleta'].values[0]
@@ -1705,7 +1711,8 @@ class MainWindow(qtw.QWidget):
         self.cantidad.setText('1')
         self.fecha_rec.setText(self.fecha)
         # print('Campos rellenados')
-        # self.display_total()
+        self.display_total()
+        self.display_p_unitario()
         print('Display total hecho')
         if isinstance(self.sender(), qtw.QPushButton):
             # restaura lista original de trabajos
@@ -1716,7 +1723,9 @@ class MainWindow(qtw.QWidget):
             # print('Listas restauradas')
 
     def borrar_presupuesto_cargado(self):
-        """Borra el presupuesto que se ha cargado desde los comboboxes de la base de datos de presupuestos"""
+        """Borra el presupuesto que se ha cargado desde los comboboxes de la base de datos de presupuestos.
+        """
+
         print('Borrando')
         try:
             cliente = self.cliente.text()
