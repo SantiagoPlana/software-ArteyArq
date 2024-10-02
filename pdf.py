@@ -138,6 +138,7 @@ def generate(dic, path=''):
         cuit.drawOn(canvas, width-173, length-770)
 
         canvas.save()
+        return name
     except Exception as e:
         print(str(e))
 
@@ -155,7 +156,7 @@ def orden_trabajo(dic, path=''):
     cantidad = dic['Cant']
     motivo = dic['Motivo']
     canvas.setFont('Calibri', 10)
-    f_entrega = dic['F_Entrega']
+    f_entrega = '' if dic['F_Entrega'] == 'S/D' else dic['F_Entrega']
     f_recepcion = str(fecha)
     canvas.drawString(x=100, y=length-20, text=f'Fecha Recepción: {f_recepcion}')
     canvas.drawString(x=350, y=length-20, text=f'Fecha Entrega: {f_entrega}')
@@ -266,7 +267,7 @@ def orden_trabajo(dic, path=''):
     # image = Image('png_aya.png', width=90, height=78)
 
     canvas.save()
-
+    return name
 
 
 if __name__ == '__main__':
