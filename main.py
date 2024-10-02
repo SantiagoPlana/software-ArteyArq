@@ -1214,21 +1214,22 @@ class MainWindow(qtw.QWidget):
     @qtc.pyqtSlot()
     def complete_products(self, string, idx):
         """completa los precios según el producto elegido y los cálculos según las medidas"""
-        subset = self.productos[
-            self.productos['DenominaciónCompleta'] == string]
-        row, column, cols, rows = self.grid2.getItemPosition(idx)
-        stock = self.grid2.itemAtPosition(row, 5).widget()
-        p_unit = self.grid2.itemAtPosition(row, 6).widget()
-        #total = self.grid2.itemAtPosition(row, 7).widget()
-        if len(self.med_final_cm_ancho.text()) > 0 and len(self.med_final_cm_alto.text()) > 0:
-            ancho = float(self.med_final_cm_ancho.text())
-            alto = float(self.med_final_cm_alto.text())
-            self.calculo_total(ancho, alto)
-        try:
-            stock.setText(str(subset.loc[:, 'Stock'].values[0]))
-            p_unit.setText(str(subset.loc[:, 'PrecioUnidad'].values[0]))
-        except Exception as e:
-            pass
+        if string:
+            try:
+                subset = self.productos[
+                    self.productos['DenominaciónCompleta'] == string]
+                row, column, cols, rows = self.grid2.getItemPosition(idx)
+                stock = self.grid2.itemAtPosition(row, 5).widget()
+                p_unit = self.grid2.itemAtPosition(row, 6).widget()
+                stock.setText(str(subset.loc[:, 'Stock'].values[0]))
+                p_unit.setText(str(subset.loc[:, 'PrecioUnidad'].values[0]))
+
+                if len(self.med_final_cm_ancho.text()) > 0 and len(self.med_final_cm_alto.text()) > 0:
+                    ancho = float(self.med_final_cm_ancho.text())
+                    alto = float(self.med_final_cm_alto.text())
+                    self.calculo_total(ancho, alto)
+            except Exception as e:
+                print(f'Error: {e}')
 
     @qtc.pyqtSlot()
     def restaurar_lista_trabajos(self):
