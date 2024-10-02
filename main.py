@@ -1,20 +1,18 @@
 import sys
 import os
-from errno import ECHILD
-
+# from errno import ECHILD
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
-from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon, QFont, QPainter, QImage
+from PyQt5.QtGui import QPixmap, QDoubleValidator, QIcon, QFont, QPainter, QImage, QFontDatabase
 from PyQt5.QtPrintSupport import QPrinter
 # from PyQt5.QtPdf import QPdfDocument
-from pdf2image import convert_from_path
+# from pdf2image import convert_from_path
 import subprocess
 import pandas as pd
 import csv
 import time
 import traceback
 import datetime
-
 from PyQt5.QtWidgets import QMessageBox
 from pdf import generate, orden_trabajo
 
@@ -565,6 +563,8 @@ class MainWindow(qtw.QWidget):
         self.setWindowTitle('Arte & Arquitectura')
         self.setWindowIcon(QIcon('png_aya.ico'))
 
+        self.load_fonts('fonts')
+
         self.productos = None
         self.threadpool = qtc.QThreadPool()
         # self.cargar_data_productos()
@@ -946,6 +946,15 @@ class MainWindow(qtw.QWidget):
         self.status_bar.setStyleSheet("color:white; font-size: 13pt;")
         # Show
         self.show()
+
+    def load_fonts(self, font_folder):
+        # Load all .ttf files in the specified font folder
+        for filename in os.listdir(font_folder):
+            if filename.endswith('.ttf'):
+                font_path = os.path.join(font_folder, filename)
+                font_id = QFontDatabase.addApplicationFont(font_path)
+                font_families = QFontDatabase.applicationFontFamilies(font_id)
+                print(f'Loaded font: {font_families}')
 
     def crear_widgets(self):
         """Crea e inicializa widgets."""
@@ -1684,21 +1693,11 @@ class MainWindow(qtw.QWidget):
                         continue
 
                     if isinstance(widget, qtw.QComboBox):
-                        print(
-                            f'Widget {widget.objectName()} - '
-                            f'Enabled: {widget.isEnabled()},'
-                            f' Visible: {widget.isVisible()}')
-
                         widget.clearEditText()
-                        print(f'Widget {widget.objectName()} cleared')
+
                     elif isinstance(widget, (qtw.QLineEdit, qtw.QTextEdit)):
-                        print(
-                            f'Widget {widget.objectName()} - '
-                            f'Enabled: {widget.isEnabled()},'
-                            f' Visible: {widget.isVisible()}')
                         try:
                             widget.clear()
-                            # print(f'Widget {widget.objectName()} cleared')
                         except Exception as e:
                             print(e)
             except Exception as e:
@@ -1713,7 +1712,7 @@ class MainWindow(qtw.QWidget):
         # print('Campos rellenados')
         self.display_total()
         self.display_p_unitario()
-        print('Display total hecho')
+        # print('Display total hecho')
         if isinstance(self.sender(), qtw.QPushButton):
             # restaura lista original de trabajos
             # print('Restaurando listas')
